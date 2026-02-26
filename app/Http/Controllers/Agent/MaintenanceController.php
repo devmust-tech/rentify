@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Agent;
 
 use App\Http\Controllers\Controller;
+use App\Enums\NotificationType;
 use App\Mail\MaintenanceUpdated;
+use App\Models\MaintenanceNote;
 use App\Models\MaintenanceRequest;
 use App\Models\Property;
 use App\Models\Unit;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 
@@ -27,7 +30,7 @@ class MaintenanceController extends Controller
 
     public function show(MaintenanceRequest $maintenance)
     {
-        $maintenance->load(['unit.property', 'tenant.user']);
+        $maintenance->load(['unit.property', 'tenant.user', 'notes.user']);
         return view('agent.maintenance.show', compact('maintenance'));
     }
 
@@ -50,11 +53,45 @@ class MaintenanceController extends Controller
             $validated['resolved_at'] = now();
         }
 
+        // If a note was provided, create a MaintenanceNote record
+        $noteText = $validated['resolution_notes'] ?? null;
+        if ($noteText) {
+            MaintenanceNote::create([
+                'maintenance_request_id' => $maintenance->id,
+                'user_id' => $request->user()->id,
+                'note' => $noteText,
+            ]);
+        }
+
         $maintenance->update($validated);
 
         $maintenance->load('tenant.user', 'unit.property');
         Mail::to($maintenance->tenant->user->email)->queue(new MaintenanceUpdated($maintenance));
 
+        // In-app notification for tenant (sendEmail=false to avoid double email)
+        app(NotificationService::class)->notify(
+            user: $maintenance->tenant->user,
+            type: NotificationType::MAINTENANCE_UPDATE,
+            subject: 'Maintenance Request Updated',
+            message: 'Your maintenance request "' . $maintenance->title . '" has been updated. Status: ' . $maintenance->status->value . '.',
+            sendEmail: false,
+        );
+
         return redirect()->route('agent.maintenance.show', $maintenance)->with('success', 'Request updated.');
+    }
+
+    public function addNote(Request $request, MaintenanceRequest $maintenance)
+    {
+        $validated = $request->validate([
+            'note' => 'required|string|max:5000',
+        ]);
+
+        MaintenanceNote::create([
+            'maintenance_request_id' => $maintenance->id,
+            'user_id' => $request->user()->id,
+            'note' => $validated['note'],
+        ]);
+
+        return redirect()->route('agent.maintenance.show', $maintenance)->with('success', 'Note added successfully.');
     }
 }

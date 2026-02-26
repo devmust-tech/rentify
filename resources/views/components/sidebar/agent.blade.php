@@ -1,5 +1,6 @@
 @php
     $current = request()->routeIs('agent.*') ? request()->route()->getName() : '';
+    $unreadNotificationCount = auth()->user()->notifications()->unread()->count();
 @endphp
 
 <div class="space-y-1">
@@ -72,6 +73,21 @@
                 <a href="{{ route('agent.leases.create') }}" class="block rounded-md px-3 py-1.5 text-sm transition {{ $current === 'agent.leases.create' ? 'text-indigo-400 font-medium' : 'text-gray-400 hover:text-white' }}">Create Lease</a>
             </div>
         </div>
+
+        {{-- Agreements --}}
+        <div x-data="{ open: {{ str_contains($current, 'agreements') ? 'true' : 'false' }} }">
+            <button @click="open = !open" class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 {{ str_contains($current, 'agreements') ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
+                <span class="flex items-center gap-x-3">
+                    <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                    Agreements
+                </span>
+                <svg class="h-4 w-4 shrink-0 transition-transform duration-200" :class="open && 'rotate-90'" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+            <div x-show="open" x-cloak class="mt-1 ml-4 space-y-0.5 border-l border-white/10 pl-4">
+                <a href="{{ route('agent.agreements.index') }}" class="block rounded-md px-3 py-1.5 text-sm transition {{ $current === 'agent.agreements.index' ? 'text-indigo-400 font-medium' : 'text-gray-400 hover:text-white' }}">All Agreements</a>
+                <a href="{{ route('agent.agreements.create') }}" class="block rounded-md px-3 py-1.5 text-sm transition {{ $current === 'agent.agreements.create' ? 'text-indigo-400 font-medium' : 'text-gray-400 hover:text-white' }}">New Agreement</a>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -136,9 +152,14 @@
         </div>
 
         {{-- Notifications --}}
-        <a href="{{ route('agent.notifications.index') }}" class="group flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 {{ str_contains($current, 'notifications') ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
-            <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-            Notifications
+        <a href="{{ route('agent.notifications.index') }}" class="group flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 {{ str_contains($current, 'notifications') ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
+            <span class="flex items-center gap-x-3">
+                <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                Notifications
+            </span>
+            @if($unreadNotificationCount > 0)
+                <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">{{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}</span>
+            @endif
         </a>
     </div>
 </div>

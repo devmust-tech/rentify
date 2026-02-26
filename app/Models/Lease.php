@@ -51,6 +51,11 @@ class Lease extends Model
         return $this->hasMany(Invoice::class);
     }
 
+    public function negotiations()
+    {
+        return $this->hasMany(RentNegotiation::class);
+    }
+
     public function isActive(): bool
     {
         return $this->status === LeaseStatus::ACTIVE;

@@ -134,6 +134,85 @@
         </div>
     @endif
 
+    {{-- Amenities --}}
+    @if($property->amenities->count())
+        <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 mb-8">
+            <div class="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
+                <h3 class="text-base font-semibold text-gray-900">Amenities</h3>
+                <p class="mt-0.5 text-sm text-gray-500">{{ $property->amenities->count() }} amenities available at this property</p>
+            </div>
+            <div class="p-6">
+                @php
+                    $groupedAmenities = $property->amenities->groupBy('category');
+                @endphp
+                <div class="space-y-6">
+                    @foreach($groupedAmenities as $category => $categoryAmenities)
+                        <div>
+                            <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-x-2">
+                                @if($category === 'utility')
+                                    <span class="flex h-5 w-5 items-center justify-center rounded bg-amber-50 ring-1 ring-amber-200">
+                                        <svg class="h-3 w-3 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" /></svg>
+                                    </span>
+                                @elseif($category === 'facility')
+                                    <span class="flex h-5 w-5 items-center justify-center rounded bg-blue-50 ring-1 ring-blue-200">
+                                        <svg class="h-3 w-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z" /></svg>
+                                    </span>
+                                @else
+                                    <span class="flex h-5 w-5 items-center justify-center rounded bg-emerald-50 ring-1 ring-emerald-200">
+                                        <svg class="h-3 w-3 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>
+                                    </span>
+                                @endif
+                                {{ ucfirst($category) }}
+                            </h4>
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                @foreach($categoryAmenities as $amenity)
+                                    <div class="flex items-start gap-x-3 rounded-lg border border-gray-200 bg-gray-50/50 px-4 py-3">
+                                        @if($amenity->icon)
+                                            <div class="flex-shrink-0 mt-0.5">
+                                                <svg class="h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $amenity->icon }}" />
+                                                </svg>
+                                            </div>
+                                        @else
+                                            <div class="flex-shrink-0 mt-0.5">
+                                                <svg class="h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                                </svg>
+                                            </div>
+                                        @endif
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-x-2">
+                                                <p class="text-sm font-semibold text-gray-900">{{ $amenity->name }}</p>
+                                                @if($amenity->pivot->included_in_rent)
+                                                    <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                                                        Included
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+                                                        Additional
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            @if($amenity->pivot->provider)
+                                                <p class="mt-0.5 text-xs text-gray-500">Provider: {{ $amenity->pivot->provider }}</p>
+                                            @endif
+                                            @if(!$amenity->pivot->included_in_rent && $amenity->pivot->monthly_cost)
+                                                <p class="mt-0.5 text-xs font-medium text-amber-600">KSh {{ number_format($amenity->pivot->monthly_cost, 2) }}/month</p>
+                                            @endif
+                                            @if($amenity->pivot->notes)
+                                                <p class="mt-0.5 text-xs text-gray-400">{{ $amenity->pivot->notes }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Units Table --}}
     <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
         <div class="flex items-center justify-between border-b border-gray-100 bg-gray-50/50 px-6 py-4">

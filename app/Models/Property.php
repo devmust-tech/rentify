@@ -45,6 +45,13 @@ class Property extends Model
         return $this->hasMany(Unit::class);
     }
 
+    public function amenities()
+    {
+        return $this->belongsToMany(Amenity::class, 'property_amenity')
+            ->withPivot('included_in_rent', 'provider', 'monthly_cost', 'notes')
+            ->withTimestamps();
+    }
+
     public function getVacantUnitsCountAttribute(): int
     {
         return $this->units()->where('status', 'vacant')->count();

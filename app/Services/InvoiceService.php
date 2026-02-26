@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\NotificationType;
 use App\Mail\InvoiceGenerated;
 use App\Models\Invoice;
 use App\Models\Lease;
@@ -55,6 +56,36 @@ class InvoiceService
         }
 
         return $count;
+    }
+
+    /**
+     * Mark past-due pending invoices as overdue and notify tenants.
+     */
+    public function markOverdueInvoices(): int
+    {
+        $overdueInvoices = Invoice::where('status', InvoiceStatus::PENDING)
+            ->where('due_date', '<', Carbon::today())
+            ->with('lease.tenant.user')
+            ->get();
+
+        $notificationService = app(NotificationService::class);
+
+        foreach ($overdueInvoices as $invoice) {
+            $invoice->update(['status' => InvoiceStatus::OVERDUE]);
+
+            // Notify tenant about the overdue invoice
+            if ($invoice->lease && $invoice->lease->tenant && $invoice->lease->tenant->user) {
+                $notificationService->notify(
+                    user: $invoice->lease->tenant->user,
+                    type: NotificationType::PAYMENT_REMINDER,
+                    subject: 'Invoice Overdue',
+                    message: 'Invoice overdue: KSh ' . number_format($invoice->amount, 2) . ' was due on ' . $invoice->due_date->format('d M Y') . '.',
+                    sendEmail: true,
+                );
+            }
+        }
+
+        return $overdueInvoices->count();
     }
 
     /**

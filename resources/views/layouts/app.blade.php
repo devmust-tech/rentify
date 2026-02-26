@@ -7,6 +7,14 @@
 
         <title>{{ config('app.name', 'Rentify') }}</title>
 
+        <!-- PWA -->
+        <link rel="manifest" href="/manifest.json">
+        <meta name="theme-color" content="#4f46e5">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="Rentify">
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.svg">
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=inter:300,400,500,600,700,800&display=swap" rel="stylesheet" />
@@ -76,13 +84,17 @@
 
                     <div class="flex flex-1 items-center justify-between gap-x-4">
                         @isset($header)
-                            <div class="flex-1">{{ $header }}</div>
+                            <div id="turbo-header" class="flex-1">{{ $header }}</div>
                         @endisset
 
                         <div class="flex items-center gap-x-3">
                             <!-- Notifications bell -->
+                            @php $unreadCount = auth()->user()->notifications()->unread()->count(); @endphp
                             <a href="{{ route(auth()->user()->role->value . '.notifications.index') }}" class="relative rounded-full p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition">
                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                @if($unreadCount > 0)
+                                    <span class="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full ring-2 ring-white">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
+                                @endif
                             </a>
 
                             <!-- Divider -->
@@ -106,7 +118,7 @@
                                         <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                         Profile Settings
                                     </a>
-                                    <form method="POST" action="{{ route('logout') }}">
+                                    <form method="POST" action="{{ route('logout') }}" data-turbo="false">
                                         @csrf
                                         <button type="submit" class="flex w-full items-center gap-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
@@ -120,14 +132,30 @@
                 </div>
 
                 <!-- Flash messages -->
-                <x-flash-message />
+                <div id="turbo-flash">
+                    <x-flash-message />
+                </div>
 
                 <!-- Page Content -->
-                <main class="py-6 px-4 sm:px-6 lg:px-8">
+                <main id="turbo-main" class="py-6 px-4 sm:px-6 lg:px-8">
                     {{ $slot }}
                 </main>
             </div>
         </div>
+        <!-- Service Worker Registration -->
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(function(registration) {
+                            console.log('[SW] Registered with scope:', registration.scope);
+                        })
+                        .catch(function(error) {
+                            console.log('[SW] Registration failed:', error);
+                        });
+                });
+            }
+        </script>
         @stack('scripts')
     </body>
 </html>

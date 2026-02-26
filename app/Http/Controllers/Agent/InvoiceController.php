@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Agent;
 
 use App\Http\Controllers\Controller;
 use App\Enums\InvoiceStatus;
+use App\Enums\NotificationType;
 use App\Mail\InvoiceGenerated;
 use App\Models\Invoice;
 use App\Models\Lease;
 use App\Models\Property;
 use App\Models\Unit;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 
@@ -56,6 +58,15 @@ class InvoiceController extends Controller
 
         $invoice->load('lease.tenant.user', 'lease.unit.property');
         Mail::to($invoice->lease->tenant->user->email)->queue(new InvoiceGenerated($invoice));
+
+        // In-app notification for tenant (sendEmail=false to avoid double email)
+        app(NotificationService::class)->notify(
+            user: $invoice->lease->tenant->user,
+            type: NotificationType::GENERAL,
+            subject: 'New Invoice',
+            message: 'New invoice of KSh ' . number_format($invoice->amount, 2) . ' due on ' . $invoice->due_date->format('d M Y') . '.',
+            sendEmail: false,
+        );
 
         return redirect()->route('agent.invoices.index')->with('success', 'Invoice created.');
     }

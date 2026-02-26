@@ -1,3 +1,56 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ===== Turbo Navigation - Progress Bar ===== */
+
+#turbo-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 0%;
+    background: linear-gradient(90deg, #6366f1, #818cf8, #6366f1);
+    background-size: 200% 100%;
+    z-index: 9999;
+    opacity: 0;
+    transition: width 0.2s ease, opacity 0.2s ease;
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.5), 0 0 4px rgba(99, 102, 241, 0.3);
+    pointer-events: none;
+}
+
+#turbo-progress.turbo-progress-active {
+    opacity: 1;
+    animation: turbo-shimmer 1.5s infinite linear;
+}
+
+@keyframes turbo-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ===== Turbo Navigation - Content Transitions ===== */
+
+#turbo-main {
+    transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+#turbo-main.turbo-swap-out {
+    opacity: 0;
+    transform: translateY(4px);
+}
+
+#turbo-main.turbo-swap-in {
+    animation: turbo-fade-in 0.25s ease forwards;
+}
+
+@keyframes turbo-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

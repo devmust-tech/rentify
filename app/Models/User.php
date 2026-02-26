@@ -52,6 +52,11 @@ class User extends Authenticatable
         return $this->hasMany(Notification::class);
     }
 
+    public function agentAgreements()
+    {
+        return $this->hasMany(AgentAgreement::class, 'agent_id');
+    }
+
     public function isAgent(): bool
     {
         return $this->role === UserRole::AGENT;

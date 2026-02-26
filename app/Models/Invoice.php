@@ -47,4 +47,19 @@ class Invoice extends Model
     {
         return (float) $this->amount - $this->total_paid;
     }
+
+    /**
+     * Recalculate and update invoice status based on payments received.
+     */
+    public function updateStatus(): void
+    {
+        $totalPaid = $this->total_paid;
+        $amount = (float) $this->amount;
+
+        if ($totalPaid >= $amount) {
+            $this->update(['status' => InvoiceStatus::PAID]);
+        } elseif ($totalPaid > 0) {
+            $this->update(['status' => InvoiceStatus::PARTIALLY_PAID]);
+        }
+    }
 }

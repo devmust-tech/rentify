@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Agent;
 
 use App\Http\Controllers\Controller;
+use App\Enums\NotificationType;
 use App\Enums\PaymentStatus;
 use App\Mail\PaymentReceived;
 use App\Models\Invoice;
@@ -10,6 +11,7 @@ use App\Models\Lease;
 use App\Models\Payment;
 use App\Models\Property;
 use App\Models\Unit;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 
@@ -60,8 +62,20 @@ class PaymentController extends Controller
             'paid_at' => now(),
         ]);
 
+        // Auto-update invoice status based on total payments
+        $payment->invoice->updateStatus();
+
         $payment->load('invoice.lease.tenant.user', 'invoice.lease.unit.property');
         Mail::to($payment->invoice->lease->tenant->user->email)->queue(new PaymentReceived($payment));
+
+        // In-app notification for tenant (sendEmail=false to avoid double email)
+        app(NotificationService::class)->notify(
+            user: $payment->invoice->lease->tenant->user,
+            type: NotificationType::PAYMENT_REMINDER,
+            subject: 'Payment Received',
+            message: 'Payment of KSh ' . number_format($payment->amount, 2) . ' received for invoice #' . $payment->invoice->id . '.',
+            sendEmail: false,
+        );
 
         return redirect()->route('agent.payments.index')->with('success', 'Payment recorded.');
     }

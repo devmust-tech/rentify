@@ -80,7 +80,7 @@
                     <div class="mt-6 border-t border-gray-100 pt-6">
                         <dt class="text-sm font-medium text-gray-500 mb-3">Your Signature</dt>
                         <div class="inline-block rounded-lg border border-gray-200 bg-gray-50 p-3">
-                            <img src="{{ Storage::url($activeLease->signature_url) }}" alt="Tenant signature" class="h-20">
+                            <img src="{{ asset('storage/' . $activeLease->signature_url) }}" alt="Tenant signature" class="h-20">
                         </div>
                     </div>
                 @endif
@@ -147,6 +147,121 @@
                         </div>
                     @endif
 
+                    {{-- Rent Negotiation Section --}}
+                    <div class="mt-6 border-t border-gray-100 pt-6" x-data="{ showNegotiateForm: false }">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-x-3">
+                                <div class="rounded-lg bg-indigo-100 p-2">
+                                    <svg class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                </div>
+                                <h4 class="text-sm font-semibold text-gray-900">Rent Negotiation</h4>
+                            </div>
+                            @php
+                                $hasPendingNegotiation = $pendingLease->negotiations->contains(fn($n) => $n->status->value === 'pending');
+                            @endphp
+                            @if(!$hasPendingNegotiation)
+                                <button type="button"
+                                        @click="showNegotiateForm = !showNegotiateForm"
+                                        class="inline-flex items-center gap-x-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                                    <span x-text="showNegotiateForm ? 'Cancel' : 'Propose Rent'"></span>
+                                </button>
+                            @endif
+                        </div>
+
+                        {{-- Negotiation History Thread --}}
+                        @if($pendingLease->negotiations->count() > 0)
+                            <div class="space-y-4 mb-6 max-h-96 overflow-y-auto pr-1">
+                                @foreach($pendingLease->negotiations->sortBy('created_at') as $negotiation)
+                                    @php
+                                        $isTenant = $negotiation->proposed_by === auth()->id();
+                                    @endphp
+                                    <div class="flex {{ $isTenant ? 'justify-end' : 'justify-start' }}">
+                                        <div class="max-w-[75%] {{ $isTenant ? 'order-last' : '' }}">
+                                            <div class="rounded-xl px-4 py-3 {{ $isTenant ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-900' }} ring-1 {{ $isTenant ? 'ring-indigo-700' : 'ring-gray-200' }}">
+                                                <div class="flex items-center gap-x-2 mb-1">
+                                                    <span class="text-xs font-semibold {{ $isTenant ? 'text-indigo-200' : 'text-gray-500' }}">
+                                                        {{ $isTenant ? 'You' : $negotiation->proposer->name }}
+                                                    </span>
+                                                    <x-status-badge :status="$negotiation->status" class="!text-[10px] !px-1.5 !py-0.5" />
+                                                </div>
+                                                <p class="text-sm font-bold {{ $isTenant ? 'text-white' : 'text-gray-900' }}">
+                                                    KSh {{ number_format($negotiation->proposed_rent, 2) }}
+                                                </p>
+                                                @if($negotiation->message)
+                                                    <p class="text-sm mt-1 {{ $isTenant ? 'text-indigo-100' : 'text-gray-600' }}">
+                                                        {{ $negotiation->message }}
+                                                    </p>
+                                                @endif
+                                            </div>
+                                            <p class="text-[11px] text-gray-400 mt-1 {{ $isTenant ? 'text-right' : 'text-left' }}">
+                                                {{ $negotiation->created_at->format('d/m/Y H:i') }}
+                                                @if($negotiation->responded_at)
+                                                    &middot; Responded {{ $negotiation->responded_at->format('d/m/Y H:i') }}
+                                                @endif
+                                            </p>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="rounded-lg bg-gray-50 p-4 ring-1 ring-gray-200 mb-4">
+                                <p class="text-sm text-gray-500 text-center">No negotiation history yet. You can propose a different rent amount if you'd like to negotiate.</p>
+                            </div>
+                        @endif
+
+                        {{-- Negotiate Form --}}
+                        @if($hasPendingNegotiation)
+                            <div class="rounded-lg bg-amber-50 p-4 ring-1 ring-amber-200">
+                                <div class="flex items-center gap-x-2">
+                                    <svg class="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <p class="text-sm font-medium text-amber-800">Your proposal is pending. Waiting for the agent to respond.</p>
+                                </div>
+                            </div>
+                        @endif
+
+                        <div x-show="showNegotiateForm" x-transition x-cloak>
+                            <form method="POST" action="{{ route('tenant.lease.negotiate', $pendingLease) }}" class="rounded-xl bg-gray-50 p-5 ring-1 ring-gray-200">
+                                @csrf
+                                <h5 class="text-sm font-semibold text-gray-900 mb-4">Propose a New Rent Amount</h5>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="proposed_rent_{{ $pendingLease->id }}" class="block text-sm font-medium text-gray-700 mb-1">Proposed Monthly Rent (KSh)</label>
+                                        <input type="number"
+                                               name="proposed_rent"
+                                               id="proposed_rent_{{ $pendingLease->id }}"
+                                               step="0.01"
+                                               min="0"
+                                               value="{{ old('proposed_rent', $pendingLease->rent_amount) }}"
+                                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                               required>
+                                        <p class="mt-1 text-xs text-gray-500">Current rent: KSh {{ number_format($pendingLease->rent_amount, 2) }}</p>
+                                    </div>
+                                    <div>
+                                        <label for="message_{{ $pendingLease->id }}" class="block text-sm font-medium text-gray-700 mb-1">Reason / Message (Optional)</label>
+                                        <textarea name="message"
+                                                  id="message_{{ $pendingLease->id }}"
+                                                  rows="3"
+                                                  maxlength="1000"
+                                                  class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                  placeholder="Why are you proposing this amount?">{{ old('message') }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="mt-4 flex items-center gap-x-3">
+                                    <button type="submit"
+                                            class="inline-flex items-center gap-x-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                                        Submit Proposal
+                                    </button>
+                                    <button type="button" @click="showNegotiateForm = false"
+                                            class="rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
                     {{-- Signing Section --}}
                     <div class="mt-6 border-t border-gray-100 pt-6">
                         <template x-if="!showSigningArea">
@@ -159,14 +274,32 @@
                         </template>
 
                         <template x-if="showSigningArea">
-                            <form method="POST" action="{{ route('tenant.lease.sign', $pendingLease) }}" @submit.prevent="submitSignature">
+                            <form method="POST" action="{{ route('tenant.lease.sign', $pendingLease) }}" enctype="multipart/form-data" @submit.prevent="submitSignature">
                                 @csrf
                                 <input type="hidden" name="signature" x-ref="signatureInput">
 
                                 <div class="space-y-6">
-                                    {{-- Signature Canvas --}}
+                                    {{-- Signature Method Toggle --}}
                                     <div>
-                                        <label class="block text-sm font-semibold text-gray-900 mb-3">Draw Your Signature</label>
+                                        <label class="block text-sm font-semibold text-gray-900 mb-3">Signature Method</label>
+                                        <div class="flex gap-x-3">
+                                            <button type="button" @click="signMethod = 'draw'; uploadPreview = null"
+                                                    :class="signMethod === 'draw' ? 'bg-indigo-600 text-white ring-indigo-600' : 'bg-white text-gray-700 ring-gray-300 hover:bg-gray-50'"
+                                                    class="inline-flex items-center gap-x-2 rounded-lg px-4 py-2 text-sm font-medium ring-1 transition-colors">
+                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                Draw Signature
+                                            </button>
+                                            <button type="button" @click="signMethod = 'upload'; clearCanvas()"
+                                                    :class="signMethod === 'upload' ? 'bg-indigo-600 text-white ring-indigo-600' : 'bg-white text-gray-700 ring-gray-300 hover:bg-gray-50'"
+                                                    class="inline-flex items-center gap-x-2 rounded-lg px-4 py-2 text-sm font-medium ring-1 transition-colors">
+                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                Upload Photo
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {{-- Draw Signature Canvas --}}
+                                    <div x-show="signMethod === 'draw'" x-transition>
                                         <div class="inline-block rounded-xl border-2 border-dashed border-gray-300 bg-white p-1"
                                              :class="{ 'border-indigo-400 ring-2 ring-indigo-100': isDrawing }">
                                             <canvas x-ref="canvas"
@@ -190,6 +323,32 @@
                                             </button>
                                             <span x-show="!hasSigned" class="text-sm text-gray-400">Sign above using your mouse or finger</span>
                                             <span x-show="hasSigned" x-cloak class="text-sm text-emerald-600 font-medium">Signature captured</span>
+                                        </div>
+                                    </div>
+
+                                    {{-- Upload Signature Photo --}}
+                                    <div x-show="signMethod === 'upload'" x-transition>
+                                        <div class="flex justify-center rounded-xl border-2 border-dashed border-gray-300 px-6 py-8 transition hover:border-indigo-400">
+                                            <div class="text-center">
+                                                <template x-if="!uploadPreview">
+                                                    <div>
+                                                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                        <div class="mt-3 flex text-sm text-gray-600">
+                                                            <label class="relative cursor-pointer rounded-md font-semibold text-indigo-600 hover:text-indigo-500">
+                                                                <span>Upload signature photo</span>
+                                                                <input type="file" name="signature_photo" accept="image/*" class="sr-only" @change="previewUpload($event)">
+                                                            </label>
+                                                        </div>
+                                                        <p class="mt-1.5 text-xs text-gray-500">Take a photo of your handwritten signature (JPG, PNG up to 5MB)</p>
+                                                    </div>
+                                                </template>
+                                                <template x-if="uploadPreview">
+                                                    <div>
+                                                        <img :src="uploadPreview" class="mx-auto h-24 rounded-lg border border-gray-200">
+                                                        <button type="button" @click="removeUpload()" class="mt-2 text-sm font-medium text-red-600 hover:text-red-500">Remove</button>
+                                                    </div>
+                                                </template>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -219,7 +378,7 @@
                                     {{-- Submit Buttons --}}
                                     <div class="flex items-center gap-x-3">
                                         <button type="submit"
-                                                :disabled="!agreed || !hasSigned || submitting"
+                                                :disabled="!agreed || (!hasSigned && !uploadPreview) || submitting"
                                                 class="inline-flex items-center gap-x-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                                             <svg x-show="!submitting" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                             <svg x-show="submitting" x-cloak class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -289,23 +448,39 @@
         function signaturePad(leaseId) {
             return {
                 showSigningArea: false,
+                signMethod: 'draw',
                 isDrawing: false,
                 hasSigned: false,
                 agreed: false,
                 submitting: false,
+                uploadPreview: null,
                 ctx: null,
                 lastX: 0,
                 lastY: 0,
 
                 init() {
                     this.$nextTick(() => {
-                        // Canvas will be initialized when signing area is shown
                         this.$watch('showSigningArea', (value) => {
                             if (value) {
                                 this.$nextTick(() => this.initCanvas());
                             }
                         });
                     });
+                },
+
+                previewUpload(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) { alert('File must be under 5MB'); return; }
+                    const reader = new FileReader();
+                    reader.onload = (e) => this.uploadPreview = e.target.result;
+                    reader.readAsDataURL(file);
+                },
+
+                removeUpload() {
+                    this.uploadPreview = null;
+                    const input = this.$el.querySelector('input[name="signature_photo"]');
+                    if (input) input.value = '';
                 },
 
                 initCanvas() {
@@ -395,10 +570,14 @@
                 },
 
                 submitSignature() {
-                    if (!this.hasSigned || !this.agreed || this.submitting) return;
+                    if (!this.agreed || this.submitting) return;
+                    if (this.signMethod === 'draw' && !this.hasSigned) return;
+                    if (this.signMethod === 'upload' && !this.uploadPreview) return;
                     this.submitting = true;
-                    const dataUrl = this.$refs.canvas.toDataURL('image/png');
-                    this.$refs.signatureInput.value = dataUrl;
+                    if (this.signMethod === 'draw') {
+                        const dataUrl = this.$refs.canvas.toDataURL('image/png');
+                        this.$refs.signatureInput.value = dataUrl;
+                    }
                     this.$el.submit();
                 }
             };

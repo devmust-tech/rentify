@@ -67,15 +67,38 @@
                     </div>
 
                     {{-- Emergency Contact --}}
-                    <div>
-                        <label for="emergency_contact" class="block text-sm font-medium text-gray-700 mb-1.5">Emergency Contact</label>
-                        <textarea name="emergency_contact"
-                                  id="emergency_contact"
-                                  rows="3"
-                                  class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition"
-                                  placeholder="Name, phone number, and relationship">{{ old('emergency_contact') }}</textarea>
-                        @error('emergency_contact') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
-                    </div>
+                    <fieldset class="rounded-lg border border-gray-200 p-4">
+                        <legend class="px-2 text-sm font-semibold text-gray-700">Emergency Contact</legend>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="emergency_contact_name" class="block text-sm font-medium text-gray-700 mb-1.5">Contact Name</label>
+                                <input type="text" name="emergency_contact_name" id="emergency_contact_name" value="{{ old('emergency_contact_name') }}"
+                                       class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition"
+                                       placeholder="e.g. John Doe">
+                                @error('emergency_contact_name') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label for="emergency_contact_phone" class="block text-sm font-medium text-gray-700 mb-1.5">Phone Number</label>
+                                    <input type="text" name="emergency_contact_phone" id="emergency_contact_phone" value="{{ old('emergency_contact_phone') }}"
+                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition"
+                                           placeholder="0712 345 678">
+                                    @error('emergency_contact_phone') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label for="emergency_contact_relationship" class="block text-sm font-medium text-gray-700 mb-1.5">Relationship</label>
+                                    <select name="emergency_contact_relationship" id="emergency_contact_relationship"
+                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition">
+                                        <option value="">Select...</option>
+                                        @foreach(['Spouse', 'Parent', 'Sibling', 'Child', 'Friend', 'Colleague', 'Other'] as $rel)
+                                            <option value="{{ $rel }}" {{ old('emergency_contact_relationship') == $rel ? 'selected' : '' }}>{{ $rel }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('emergency_contact_relationship') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
 
                     {{-- ID Document --}}
                     <div>

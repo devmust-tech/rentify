@@ -30,7 +30,9 @@ class TenantController extends Controller
             'email' => 'required|email|unique:users,email',
             'phone' => 'required|string',
             'password' => 'required|string|min:8',
-            'emergency_contact' => 'nullable|string',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_phone' => 'nullable|string|max:20',
+            'emergency_contact_relationship' => 'nullable|string|max:50',
             'id_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
@@ -49,10 +51,19 @@ class TenantController extends Controller
             $idDocPath = $request->file('id_document')->store('tenant-documents', 'public');
         }
 
+        $emergencyContact = null;
+        if ($request->emergency_contact_name) {
+            $emergencyContact = json_encode([
+                'name' => $request->emergency_contact_name,
+                'phone' => $request->emergency_contact_phone,
+                'relationship' => $request->emergency_contact_relationship,
+            ]);
+        }
+
         Tenant::create([
             'user_id' => $user->id,
             'phone' => $request->phone,
-            'emergency_contact' => $request->emergency_contact,
+            'emergency_contact' => $emergencyContact,
             'id_document' => $idDocPath,
         ]);
 
@@ -77,7 +88,9 @@ class TenantController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $tenant->user_id,
             'phone' => 'required|string',
-            'emergency_contact' => 'nullable|string',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_phone' => 'nullable|string|max:20',
+            'emergency_contact_relationship' => 'nullable|string|max:50',
             'id_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
@@ -87,9 +100,18 @@ class TenantController extends Controller
             'phone' => $request->phone,
         ]);
 
+        $emergencyContact = null;
+        if ($request->emergency_contact_name) {
+            $emergencyContact = json_encode([
+                'name' => $request->emergency_contact_name,
+                'phone' => $request->emergency_contact_phone,
+                'relationship' => $request->emergency_contact_relationship,
+            ]);
+        }
+
         $data = [
             'phone' => $request->phone,
-            'emergency_contact' => $request->emergency_contact,
+            'emergency_contact' => $emergencyContact,
         ];
 
         if ($request->hasFile('id_document')) {

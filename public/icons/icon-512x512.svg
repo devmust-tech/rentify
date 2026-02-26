@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="38" fill="#4f46e5"/>
+  <g transform="translate(96,96)">
+    <!-- House/building icon -->
+    <g transform="translate(-48,-48)" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Roof -->
+      <path d="M12 48L48 16L84 48"/>
+      <!-- Main building body -->
+      <path d="M20 44V80C20 82.2 21.8 84 24 84H40V68C40 65.8 41.8 64 44 64H52C54.2 64 56 65.8 56 68V84H72C74.2 84 76 82.2 76 80V44"/>
+      <!-- Windows -->
+      <rect x="32" y="48" width="10" height="10" rx="1.5" fill="rgba(255,255,255,0.3)" stroke="white" stroke-width="3"/>
+      <rect x="54" y="48" width="10" height="10" rx="1.5" fill="rgba(255,255,255,0.3)" stroke="white" stroke-width="3"/>
+    </g>
+  </g>
+  <!-- Rentify text -->
+  <text x="96" y="152" text-anchor="middle" fill="white" font-family="Inter, -apple-system, sans-serif" font-size="22" font-weight="700" letter-spacing="-0.5">Rentify</text>
+</svg>

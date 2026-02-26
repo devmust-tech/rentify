@@ -15,6 +15,22 @@
                     </div>
                 </div>
             </div>
+            <div class="flex items-center gap-x-3">
+                <a href="{{ route('landlord.properties.units.create', $property) }}"
+                   class="inline-flex items-center gap-x-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">
+                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Add Unit
+                </a>
+                <a href="{{ route('landlord.properties.edit', $property) }}"
+                   class="inline-flex items-center gap-x-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">
+                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+                    </svg>
+                    Edit Property
+                </a>
+            </div>
         </div>
     </x-slot>
 
@@ -80,6 +96,16 @@
                     <dt class="text-sm font-medium text-gray-500">Type</dt>
                     <dd class="mt-1.5"><x-status-badge :status="$property->property_type" /></dd>
                 </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Management</dt>
+                    <dd class="mt-1 text-sm font-semibold text-gray-900">
+                        @if($property->agent_id)
+                            Managed by Agent
+                        @else
+                            <span class="inline-flex items-center rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-600/20">Self-Managed</span>
+                        @endif
+                    </dd>
+                </div>
             </dl>
         </div>
     </div>
@@ -105,9 +131,18 @@
     {{-- Units Table --}}
     <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
         <div class="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
-            <div>
-                <h3 class="text-base font-semibold text-gray-900">Units</h3>
-                <p class="mt-0.5 text-sm text-gray-500">All units belonging to this property</p>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-semibold text-gray-900">Units</h3>
+                    <p class="mt-0.5 text-sm text-gray-500">All units belonging to this property</p>
+                </div>
+                <a href="{{ route('landlord.properties.units.create', $property) }}"
+                   class="inline-flex items-center gap-x-2 rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">
+                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Add Unit
+                </a>
             </div>
         </div>
         <table class="min-w-full divide-y divide-gray-200">
@@ -118,6 +153,7 @@
                     <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Rent</th>
                     <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
                     <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Tenant</th>
+                    <th scope="col" class="px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -128,10 +164,19 @@
                         <td class="px-6 py-4 text-sm font-medium text-gray-900">KSh {{ number_format($unit->rent_amount, 2) }}</td>
                         <td class="px-6 py-4 text-sm"><x-status-badge :status="$unit->status" /></td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ $unit->activeLease?->tenant?->user?->name ?? '-' }}</td>
+                        <td class="px-6 py-4 text-right text-sm">
+                            <a href="{{ route('landlord.properties.units.edit', [$property, $unit]) }}"
+                               class="inline-flex items-center gap-x-1 text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
+                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+                                </svg>
+                                Edit
+                            </a>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-6 py-16 text-center">
+                        <td colspan="6" class="px-6 py-16 text-center">
                             <div class="flex flex-col items-center">
                                 <div class="rounded-full bg-gray-100 p-3 mb-4">
                                     <svg class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -139,7 +184,14 @@
                                     </svg>
                                 </div>
                                 <h3 class="text-sm font-semibold text-gray-900">No units yet</h3>
-                                <p class="mt-1 text-sm text-gray-500">Units for this property will appear here.</p>
+                                <p class="mt-1 text-sm text-gray-500">Get started by adding a unit to this property.</p>
+                                <a href="{{ route('landlord.properties.units.create', $property) }}"
+                                   class="mt-4 inline-flex items-center gap-x-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">
+                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    Add Unit
+                                </a>
                             </div>
                         </td>
                     </tr>

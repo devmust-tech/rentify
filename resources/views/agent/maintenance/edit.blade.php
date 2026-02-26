@@ -113,12 +113,13 @@
                         @error('assigned_to') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 
-                    {{-- Resolution Notes --}}
+                    {{-- Add Update Note --}}
                     <div>
-                        <label for="resolution_notes" class="block text-sm font-medium text-gray-700 mb-1.5">Resolution Notes</label>
+                        <label for="resolution_notes" class="block text-sm font-medium text-gray-700 mb-1.5">Add Update Note</label>
                         <textarea name="resolution_notes" id="resolution_notes" rows="4"
                                   class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition"
-                                  placeholder="Describe the resolution or work performed...">{{ old('resolution_notes', $maintenance->resolution_notes) }}</textarea>
+                                  placeholder="Add an update note about the work performed or status change...">{{ old('resolution_notes') }}</textarea>
+                        <p class="mt-1.5 text-xs text-gray-500">This note will be added to the request's notes history.</p>
                         @error('resolution_notes') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>

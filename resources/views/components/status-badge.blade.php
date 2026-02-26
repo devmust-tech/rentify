@@ -48,6 +48,10 @@
         'bank_transfer' => 'bg-blue-50 text-blue-700 ring-blue-600/20',
         'cash' => 'bg-amber-50 text-amber-700 ring-amber-600/20',
         'cheque' => 'bg-purple-50 text-purple-700 ring-purple-600/20',
+        // Negotiation
+        'accepted' => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+        'rejected' => 'bg-red-50 text-red-700 ring-red-600/20',
+        'countered' => 'bg-indigo-50 text-indigo-700 ring-indigo-600/20',
     ];
 
     $statusValue = $status instanceof \BackedEnum ? $status->value : (string) $status;

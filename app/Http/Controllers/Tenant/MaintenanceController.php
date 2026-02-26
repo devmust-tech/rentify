@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Enums\NotificationType;
 use App\Models\MaintenanceRequest;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class MaintenanceController extends Controller
@@ -48,7 +50,7 @@ class MaintenanceController extends Controller
             }
         }
 
-        MaintenanceRequest::create([
+        $maintenanceRequest = MaintenanceRequest::create([
             'unit_id' => $activeLease->unit_id,
             'tenant_id' => $tenant->id,
             'title' => $validated['title'],
@@ -57,6 +59,19 @@ class MaintenanceController extends Controller
             'status' => 'pending',
             'photos' => $photos,
         ]);
+
+        // Notify the property's agent about the new maintenance request
+        $activeLease->load('unit.property.agent');
+        $agent = $activeLease->unit->property->agent;
+        if ($agent) {
+            app(NotificationService::class)->notify(
+                user: $agent,
+                type: NotificationType::MAINTENANCE_UPDATE,
+                subject: 'New Maintenance Request',
+                message: 'New maintenance request: ' . $validated['title'],
+                sendEmail: true,
+            );
+        }
 
         return redirect()->route('tenant.maintenance.index')
             ->with('success', 'Maintenance request submitted');
@@ -69,7 +84,7 @@ class MaintenanceController extends Controller
             abort(403, 'Unauthorized access to this maintenance request.');
         }
 
-        $maintenance->load('unit.property');
+        $maintenance->load(['unit.property', 'notes.user']);
         return view('tenant.maintenance.show', compact('maintenance'));
     }
 }

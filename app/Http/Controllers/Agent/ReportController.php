@@ -25,8 +25,11 @@ class ReportController extends Controller
         $leaseIds = Lease::whereIn('unit_id', $unitIds)->pluck('id');
         $totalCollected = Payment::whereIn('invoice_id', Invoice::whereIn('lease_id', $leaseIds)->pluck('id'))
             ->where('status', 'completed')->sum('amount');
-        $totalArrears = Invoice::whereIn('lease_id', $leaseIds)
-            ->whereIn('status', ['pending', 'overdue', 'partially_paid'])->sum('amount');
+        $arrearsInvoices = Invoice::whereIn('lease_id', $leaseIds)
+            ->whereIn('status', ['pending', 'overdue', 'partially_paid'])
+            ->with('payments')
+            ->get();
+        $totalArrears = $arrearsInvoices->sum(fn($inv) => $inv->amount - $inv->payments->where('status.value', 'completed')->sum('amount'));
 
         $landlords = Landlord::whereHas('properties', fn($q) => $q->where('agent_id', $agentId))
             ->with('user')->get();

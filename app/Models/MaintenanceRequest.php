@@ -44,4 +44,9 @@ class MaintenanceRequest extends Model
     {
         return $this->belongsTo(Tenant::class);
     }
+
+    public function notes()
+    {
+        return $this->hasMany(MaintenanceNote::class);
+    }
 }

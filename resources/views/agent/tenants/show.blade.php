@@ -52,9 +52,29 @@
                             @endif
                         </dd>
                     </div>
-                    <div class="rounded-lg bg-gray-50/50 p-4">
-                        <dt class="text-xs font-medium uppercase tracking-wider text-gray-500">Emergency Contact</dt>
-                        <dd class="mt-1.5 text-sm font-medium text-gray-900 whitespace-pre-line">{{ $tenant->emergency_contact ?? 'N/A' }}</dd>
+                    @php $ec = is_array($tenant->emergency_contact) ? $tenant->emergency_contact : json_decode($tenant->emergency_contact, true); @endphp
+                    <div class="rounded-lg bg-gray-50/50 p-4 sm:col-span-2">
+                        <dt class="text-xs font-medium uppercase tracking-wider text-gray-500 mb-2">Emergency Contact</dt>
+                        @if($ec && ($ec['name'] ?? null))
+                            <dd class="grid grid-cols-3 gap-4 text-sm">
+                                <div>
+                                    <span class="text-gray-500">Name:</span>
+                                    <span class="ml-1 font-medium text-gray-900">{{ $ec['name'] }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500">Phone:</span>
+                                    <span class="ml-1 font-medium text-gray-900">{{ $ec['phone'] ?? 'N/A' }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500">Relationship:</span>
+                                    <span class="ml-1 font-medium text-gray-900">{{ $ec['relationship'] ?? 'N/A' }}</span>
+                                </div>
+                            </dd>
+                        @elseif(is_string($tenant->emergency_contact) && $tenant->emergency_contact)
+                            <dd class="text-sm font-medium text-gray-900">{{ $tenant->emergency_contact }}</dd>
+                        @else
+                            <dd class="text-sm text-gray-400">Not provided</dd>
+                        @endif
                     </div>
                 </dl>
             </div>
@@ -81,7 +101,7 @@
                             <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $lease->unit->unit_number }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">{{ $lease->unit->property->name }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">{{ $lease->start_date->format('d M Y') }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">{{ $lease->end_date->format('d M Y') }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">{{ $lease->end_date?->format('d M Y') ?? 'Open-ended' }}</td>
                             <td class="px-6 py-4 text-sm"><x-status-badge :status="$lease->status" /></td>
                         </tr>
                     @empty

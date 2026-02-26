@@ -8,7 +8,7 @@
         </div>
     </x-slot>
 
-    <div class="max-w-3xl">
+    <div class="max-w-3xl" x-data="leaseForm()">
         <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
             <div class="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
                 <h3 class="text-base font-semibold text-gray-900">Lease Information</h3>
@@ -36,11 +36,11 @@
                     {{-- Unit --}}
                     <div>
                         <label for="unit_id" class="block text-sm font-medium text-gray-700 mb-1.5">Unit</label>
-                        <select name="unit_id" id="unit_id" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition" required>
+                        <select name="unit_id" id="unit_id" x-model="selectedUnitId" @change="onUnitChange()" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition" required>
                             <option value="">Select a unit</option>
                             @foreach($units as $unit)
                                 <option value="{{ $unit->id }}" {{ old('unit_id') == $unit->id ? 'selected' : '' }}>
-                                    {{ $unit->property->name }} - {{ $unit->unit_number }}
+                                    {{ $unit->property->name }} - {{ $unit->unit_number }} (KSh {{ number_format($unit->rent_amount, 2) }}/mo)
                                 </option>
                             @endforeach
                         </select>
@@ -55,8 +55,9 @@
                             @error('start_date') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1.5">End Date</label>
-                            <input type="date" name="end_date" id="end_date" value="{{ old('end_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition" required>
+                            <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1.5">End Date <span class="text-gray-400 font-normal">(optional)</span></label>
+                            <input type="date" name="end_date" id="end_date" value="{{ old('end_date') }}" class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition">
+                            <p class="mt-1 text-xs text-gray-400">Leave blank for open-ended lease</p>
                             @error('end_date') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -69,8 +70,9 @@
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                     <span class="text-gray-400 text-sm">KSh</span>
                                 </div>
-                                <input type="number" name="rent_amount" id="rent_amount" value="{{ old('rent_amount') }}" step="0.01" min="0" class="block w-full rounded-lg border-gray-300 pl-12 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition" required>
+                                <input type="number" name="rent_amount" id="rent_amount" x-model="rentAmount" value="{{ old('rent_amount') }}" step="0.01" min="0" class="block w-full rounded-lg border-gray-300 pl-12 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition" required>
                             </div>
+                            <p x-show="autoLoaded" x-cloak class="mt-1 text-xs text-emerald-600">Auto-loaded from unit</p>
                             @error('rent_amount') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
@@ -79,7 +81,7 @@
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                     <span class="text-gray-400 text-sm">KSh</span>
                                 </div>
-                                <input type="number" name="deposit" id="deposit" value="{{ old('deposit') }}" step="0.01" min="0" class="block w-full rounded-lg border-gray-300 pl-12 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition" required>
+                                <input type="number" name="deposit" id="deposit" x-model="depositAmount" value="{{ old('deposit') }}" step="0.01" min="0" class="block w-full rounded-lg border-gray-300 pl-12 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition" required>
                             </div>
                             @error('deposit') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
@@ -108,4 +110,26 @@
             </form>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        function leaseForm() {
+            const units = @json($units->mapWithKeys(fn($u) => [$u->id => ['rent' => $u->rent_amount, 'deposit' => $u->deposit_amount]]));
+            return {
+                selectedUnitId: '{{ old('unit_id', '') }}',
+                rentAmount: '{{ old('rent_amount', '') }}',
+                depositAmount: '{{ old('deposit', '') }}',
+                autoLoaded: false,
+                onUnitChange() {
+                    const unit = units[this.selectedUnitId];
+                    if (unit) {
+                        this.rentAmount = parseFloat(unit.rent).toFixed(2);
+                        this.depositAmount = parseFloat(unit.deposit).toFixed(2);
+                        this.autoLoaded = true;
+                    }
+                }
+            };
+        }
+    </script>
+    @endpush
 </x-app-layout>
