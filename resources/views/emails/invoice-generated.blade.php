@@ -49,7 +49,7 @@
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
         <tr>
             <td align="center" style="padding: 8px 0 16px 0;">
-                <a href="{{ url('/tenant/invoices') }}" style="display: inline-block; background-color: #312e81; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 15px; font-weight: 600;">
+                <a href="{{ $appUrl }}/tenant/invoices" style="display: inline-block; background-color: #312e81; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 15px; font-weight: 600;">
                     View Invoice
                 </a>
             </td>

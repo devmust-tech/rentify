@@ -5,7 +5,7 @@
 
 <div class="space-y-1">
     {{-- Dashboard --}}
-    <a href="{{ route('agent.dashboard') }}" class="group flex items-center gap-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 {{ str_contains($current, 'dashboard') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}">
+    <a href="{{ route('agent.dashboard') }}" class="group flex items-center gap-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 {{ str_contains($current, 'dashboard') ? 'sidebar-active shadow-lg' : 'text-gray-300 hover:bg-white/10 hover:text-white' }}">
         <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
         Dashboard
     </a>
@@ -75,6 +75,7 @@
         </div>
 
         {{-- Agreements --}}
+        @if($currentOrganization->hasFeature('agreements'))
         <div x-data="{ open: {{ str_contains($current, 'agreements') ? 'true' : 'false' }} }">
             <button @click="open = !open" class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 {{ str_contains($current, 'agreements') ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
                 <span class="flex items-center gap-x-3">
@@ -88,6 +89,7 @@
                 <a href="{{ route('agent.agreements.create') }}" class="block rounded-md px-3 py-1.5 text-sm transition {{ $current === 'agent.agreements.create' ? 'text-indigo-400 font-medium' : 'text-gray-400 hover:text-white' }}">New Agreement</a>
             </div>
         </div>
+        @endif
     </div>
 </div>
 
@@ -95,6 +97,7 @@
     <p class="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">Finance</p>
     <div class="space-y-0.5">
         {{-- Invoices --}}
+        @if($currentOrganization->hasFeature('invoices'))
         <div x-data="{ open: {{ str_contains($current, 'invoices') ? 'true' : 'false' }} }">
             <button @click="open = !open" class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 {{ str_contains($current, 'invoices') ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
                 <span class="flex items-center gap-x-3">
@@ -108,8 +111,10 @@
                 <a href="{{ route('agent.invoices.create') }}" class="block rounded-md px-3 py-1.5 text-sm transition {{ $current === 'agent.invoices.create' ? 'text-indigo-400 font-medium' : 'text-gray-400 hover:text-white' }}">Create Invoice</a>
             </div>
         </div>
+        @endif
 
         {{-- Payments --}}
+        @if($currentOrganization->hasFeature('payments'))
         <div x-data="{ open: {{ str_contains($current, 'payments') ? 'true' : 'false' }} }">
             <button @click="open = !open" class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 {{ str_contains($current, 'payments') ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
                 <span class="flex items-center gap-x-3">
@@ -123,6 +128,7 @@
                 <a href="{{ route('agent.payments.create') }}" class="block rounded-md px-3 py-1.5 text-sm transition {{ $current === 'agent.payments.create' ? 'text-indigo-400 font-medium' : 'text-gray-400 hover:text-white' }}">Record Payment</a>
             </div>
         </div>
+        @endif
     </div>
 </div>
 
@@ -130,12 +136,15 @@
     <p class="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">Operations</p>
     <div class="space-y-0.5">
         {{-- Maintenance --}}
+        @if($currentOrganization->hasFeature('maintenance'))
         <a href="{{ route('agent.maintenance.index') }}" class="group flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 {{ str_contains($current, 'maintenance') ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
             <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             Maintenance
         </a>
+        @endif
 
         {{-- Reports --}}
+        @if($currentOrganization->hasFeature('reports'))
         <div x-data="{ open: {{ str_contains($current, 'reports') ? 'true' : 'false' }} }">
             <button @click="open = !open" class="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 {{ str_contains($current, 'reports') ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
                 <span class="flex items-center gap-x-3">
@@ -150,16 +159,40 @@
                 <a href="{{ route('agent.reports.occupancy') }}" class="block rounded-md px-3 py-1.5 text-sm text-gray-400 hover:text-white transition">Occupancy</a>
             </div>
         </div>
+        @endif
 
         {{-- Notifications --}}
+        @if($currentOrganization->hasFeature('notifications'))
         <a href="{{ route('agent.notifications.index') }}" class="group flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 {{ str_contains($current, 'notifications') ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
             <span class="flex items-center gap-x-3">
                 <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                 Notifications
             </span>
-            @if($unreadNotificationCount > 0)
-                <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">{{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}</span>
+            <span
+                data-notification-count
+                class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full {{ $unreadNotificationCount > 0 ? '' : 'hidden' }}"
+            >{{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}</span>
+        </a>
+        @endif
+    </div>
+</div>
+
+<div class="mt-6">
+    <p class="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">Workspace</p>
+    <div class="space-y-0.5">
+        {{-- Billing --}}
+        <a href="{{ route('agent.billing') }}" class="group flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 {{ str_contains($current, 'billing') ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
+            <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            Billing
+            @if($currentOrganization->isOnTrial())
+                <span class="ml-auto inline-flex items-center rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-300">Trial</span>
             @endif
+        </a>
+
+        {{-- Settings --}}
+        <a href="{{ route('agent.settings') }}" class="group flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 {{ str_contains($current, 'settings') ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white' }}">
+            <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            Settings
         </a>
     </div>
 </div>

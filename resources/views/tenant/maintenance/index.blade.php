@@ -13,7 +13,7 @@
         <table class="min-w-full divide-y divide-gray-200">
             <thead>
                 <tr>
-                    <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Description</th>
+                    <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Title</th>
                     <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Priority</th>
                     <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
                     <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Date</th>
@@ -23,7 +23,7 @@
             <tbody class="divide-y divide-gray-100">
                 @forelse($requests as $req)
                     <tr class="hover:bg-gray-50/50 transition-colors">
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ Str::limit($req->description, 60) }}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $req->title }}</td>
                         <td class="px-6 py-4 text-sm"><x-status-badge :status="$req->priority" /></td>
                         <td class="px-6 py-4 text-sm"><x-status-badge :status="$req->status" /></td>
                         <td class="px-6 py-4 text-sm text-gray-700">{{ $req->created_at->format('d/m/Y') }}</td>

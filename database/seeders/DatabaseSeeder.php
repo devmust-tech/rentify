@@ -18,6 +18,7 @@ use App\Models\Landlord;
 use App\Models\Lease;
 use App\Models\MaintenanceRequest;
 use App\Models\Notification;
+use App\Models\Organization;
 use App\Models\Payment;
 use App\Models\Property;
 use App\Models\Tenant;
@@ -32,6 +33,15 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Seed the super-admin first (runs outside org scope)
+        $this->call(AdminSeeder::class);
+
+        // Bind the demo org so all Model::create() calls auto-fill organization_id
+        $demoOrg = Organization::withoutGlobalScopes()->where('slug', 'demo')->first();
+        if ($demoOrg) {
+            app()->instance('currentOrganization', $demoOrg);
+        }
+
         DB::transaction(function () {
             $this->seedUsers();
         });

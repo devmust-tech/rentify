@@ -25,7 +25,7 @@ class LeaseController extends Controller
         return view('tenant.lease.index', compact('leases', 'activeLease', 'pendingLeases'));
     }
 
-    public function sign(Request $request, Lease $lease)
+    public function sign(Request $request, string $org, Lease $lease)
     {
         $tenant = $request->user()->tenant;
 
@@ -86,7 +86,7 @@ class LeaseController extends Controller
             ->with('success', 'Lease signed successfully! Your tenancy is now active.');
     }
 
-    public function negotiate(Request $request, Lease $lease)
+    public function negotiate(Request $request, string $org, Lease $lease)
     {
         $tenant = $request->user()->tenant;
 

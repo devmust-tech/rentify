@@ -72,7 +72,7 @@ class PaymentController extends Controller
         ]);
 
         // Auto-update invoice status based on total payments
-        $payment->invoice->updateStatus();
+        Invoice::find($validated['invoice_id'])->updateStatus();
 
         $payment->load('invoice.lease.tenant.user', 'invoice.lease.unit.property');
         Mail::to($payment->invoice->lease->tenant->user->email)->queue(new PaymentReceived($payment));
@@ -88,7 +88,7 @@ class PaymentController extends Controller
         return redirect()->route('landlord.payments.index')->with('success', 'Payment recorded.');
     }
 
-    public function show(Request $request, Payment $payment)
+    public function show(Request $request, string $org, Payment $payment)
     {
         $invoiceIds = $this->getLandlordInvoiceIds($request);
         if (!$invoiceIds->contains($payment->invoice_id)) {

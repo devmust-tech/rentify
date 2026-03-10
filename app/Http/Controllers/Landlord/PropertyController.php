@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Amenity;
 use App\Models\Property;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class PropertyController extends Controller
 {
@@ -33,7 +35,7 @@ class PropertyController extends Controller
             'property_type' => 'required|string',
             'description' => 'nullable|string',
             'photos' => 'required|array|min:1|max:10',
-            'photos.*' => 'image|max:5120',
+            'photos.*' => 'required|file|image|max:5120',
             'amenities' => 'nullable|array',
             'amenities.*' => 'exists:amenities,id',
             'amenity_data' => 'nullable|array',
@@ -44,8 +46,19 @@ class PropertyController extends Controller
         ]);
 
         $photos = [];
-        foreach ($request->file('photos') as $photo) {
-            $photos[] = $photo->store('properties', 'public');
+        foreach (($request->file('photos') ?? []) as $photo) {
+            if (! $photo instanceof UploadedFile || ! $photo->isValid()) {
+                continue;
+            }
+
+            $storedPhoto = $this->storePhotoFile($photo);
+            if (! empty($storedPhoto)) {
+                $photos[] = $storedPhoto;
+            }
+        }
+
+        if (empty($photos)) {
+            return back()->withErrors(['photos' => 'Please upload at least one valid photo.'])->withInput();
         }
 
         $property = Property::create([
@@ -73,7 +86,7 @@ class PropertyController extends Controller
         return redirect()->route('landlord.properties.index')->with('success', 'Property created successfully.');
     }
 
-    public function show(Request $request, Property $property)
+    public function show(Request $request, string $org, Property $property)
     {
         // Ensure the property belongs to this landlord
         if ($property->landlord_id !== $request->user()->landlord->id) {
@@ -85,7 +98,7 @@ class PropertyController extends Controller
         return view('landlord.properties.show', compact('property'));
     }
 
-    public function edit(Request $request, Property $property)
+    public function edit(Request $request, string $org, Property $property)
     {
         if ($property->landlord_id !== $request->user()->landlord->id) {
             abort(403, 'Unauthorized access to this property.');
@@ -96,7 +109,7 @@ class PropertyController extends Controller
         return view('landlord.properties.edit', compact('property', 'amenities'));
     }
 
-    public function removePhoto(Request $request, Property $property)
+    public function removePhoto(Request $request, string $org, Property $property)
     {
         if ($property->landlord_id !== $request->user()->landlord->id) {
             abort(403, 'Unauthorized access to this property.');
@@ -115,7 +128,7 @@ class PropertyController extends Controller
         return back()->with('success', 'Photo removed.');
     }
 
-    public function update(Request $request, Property $property)
+    public function update(Request $request, string $org, Property $property)
     {
         if ($property->landlord_id !== $request->user()->landlord->id) {
             abort(403, 'Unauthorized access to this property.');
@@ -131,7 +144,7 @@ class PropertyController extends Controller
             'county' => 'required|string',
             'property_type' => 'required|string',
             'description' => 'nullable|string',
-            'photos.*' => 'nullable|image|max:5120',
+            'photos.*' => 'nullable|file|image|max:5120',
             'amenities' => 'nullable|array',
             'amenities.*' => 'exists:amenities,id',
             'amenity_data' => 'nullable|array',
@@ -147,8 +160,15 @@ class PropertyController extends Controller
 
         if ($request->hasFile('photos')) {
             $photos = $existingPhotos;
-            foreach ($request->file('photos') as $photo) {
-                $photos[] = $photo->store('properties', 'public');
+            foreach (($request->file('photos') ?? []) as $photo) {
+                if (! $photo instanceof UploadedFile || ! $photo->isValid()) {
+                    continue;
+                }
+
+                $storedPhoto = $this->storePhotoFile($photo);
+                if (! empty($storedPhoto)) {
+                    $photos[] = $storedPhoto;
+                }
             }
             $validated['photos'] = $photos;
         }
@@ -171,7 +191,7 @@ class PropertyController extends Controller
         return redirect()->route('landlord.properties.show', $property)->with('success', 'Property updated.');
     }
 
-    public function destroy(Request $request, Property $property)
+    public function destroy(Request $request, string $org, Property $property)
     {
         if ($property->landlord_id !== $request->user()->landlord->id) {
             abort(403, 'Unauthorized access to this property.');
@@ -179,5 +199,32 @@ class PropertyController extends Controller
 
         $property->delete();
         return redirect()->route('landlord.properties.index')->with('success', 'Property deleted.');
+    }
+
+    private function storePhotoFile(UploadedFile $photo): ?string
+    {
+        $sourcePath = $photo->getPathname();
+
+        if (empty($sourcePath) || ! is_file($sourcePath) || ! is_readable($sourcePath)) {
+            return null;
+        }
+
+        $targetPath = 'properties/' . $photo->hashName();
+        $stream = fopen($sourcePath, 'r');
+
+        if (! is_resource($stream)) {
+            return null;
+        }
+
+        try {
+            $stored = Storage::disk('public')->put($targetPath, $stream);
+        } catch (\Throwable $e) {
+            report($e);
+            return null;
+        } finally {
+            fclose($stream);
+        }
+
+        return $stored ? $targetPath : null;
     }
 }

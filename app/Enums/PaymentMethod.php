@@ -8,6 +8,7 @@ enum PaymentMethod: string
     case BANK_TRANSFER = 'bank_transfer';
     case CASH = 'cash';
     case CHEQUE = 'cheque';
+    case STRIPE = 'stripe';
 
     public function label(): string
     {
@@ -16,6 +17,7 @@ enum PaymentMethod: string
             self::BANK_TRANSFER => 'Bank Transfer',
             self::CASH => 'Cash',
             self::CHEQUE => 'Cheque',
+            self::STRIPE => 'Card (Stripe)',
         };
     }
 }

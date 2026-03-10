@@ -2,9 +2,18 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold text-gray-900">Invoice Details</h2>
-            <a href="{{ route('agent.invoices.index') }}" class="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">
-                Back to Invoices
-            </a>
+            <div class="flex items-center gap-x-3">
+                <a href="{{ route('agent.invoices.download', $invoice) }}"
+                   class="inline-flex items-center gap-x-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">
+                    <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    Download PDF
+                </a>
+                <a href="{{ route('agent.invoices.index') }}" class="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">
+                    Back to Invoices
+                </a>
+            </div>
         </div>
     </x-slot>
 
@@ -19,6 +28,12 @@
 
         <div class="px-6 py-6">
             <dl class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+                @if($invoice->invoice_number)
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Invoice Number</dt>
+                    <dd class="mt-1 font-mono text-sm font-semibold text-gray-900">{{ $invoice->invoice_number }}</dd>
+                </div>
+                @endif
                 <div>
                     <dt class="text-sm font-medium text-gray-500">Tenant</dt>
                     <dd class="mt-1 text-sm font-semibold text-gray-900">{{ $invoice->lease->tenant->user->name }}</dd>

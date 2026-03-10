@@ -20,7 +20,7 @@ class AgreementController extends Controller
         return view('landlord.agreements.index', compact('agreements'));
     }
 
-    public function show(Request $request, AgentAgreement $agreement)
+    public function show(Request $request, string $org, AgentAgreement $agreement)
     {
         if ($agreement->landlord_id !== $request->user()->landlord->id) {
             abort(403, 'Unauthorized access to this agreement.');
@@ -31,7 +31,7 @@ class AgreementController extends Controller
         return view('landlord.agreements.show', compact('agreement'));
     }
 
-    public function sign(Request $request, AgentAgreement $agreement)
+    public function sign(Request $request, string $org, AgentAgreement $agreement)
     {
         if ($agreement->landlord_id !== $request->user()->landlord->id) {
             abort(403, 'Unauthorized access to this agreement.');

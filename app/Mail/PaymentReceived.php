@@ -50,6 +50,7 @@ class PaymentReceived extends Mailable implements ShouldQueue
                 'propertyName' => $this->payment->invoice->lease->unit->property->name,
                 'unitName' => $this->payment->invoice->lease->unit->unit_number,
                 'paidAt' => $this->payment->paid_at->format('d M Y, h:i A'),
+                'appUrl' => $this->payment->organization?->subdomainUrl() ?? config('app.url'),
             ],
         );
     }

@@ -46,6 +46,7 @@ class LeaseCreated extends Mailable implements ShouldQueue
                 'deposit' => number_format($this->lease->deposit, 2),
                 'startDate' => $this->lease->start_date->format('d M Y'),
                 'endDate' => $this->lease->end_date->format('d M Y'),
+                'appUrl' => $this->lease->organization?->subdomainUrl() ?? config('app.url'),
             ],
         );
     }

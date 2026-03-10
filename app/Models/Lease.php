@@ -3,21 +3,26 @@
 namespace App\Models;
 
 use App\Enums\LeaseStatus;
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Lease extends Model
 {
-    use HasFactory, HasUlids;
+    use HasFactory, HasUlids, BelongsToOrganization, SoftDeletes;
 
     protected $fillable = [
+        'organization_id',
         'tenant_id',
         'unit_id',
         'start_date',
         'end_date',
         'rent_amount',
         'deposit',
+        'deposit_paid_at',
+        'deposit_refunded_at',
         'terms',
         'status',
         'signed_at',
@@ -33,7 +38,16 @@ class Lease extends Model
             'deposit' => 'decimal:2',
             'status' => LeaseStatus::class,
             'signed_at' => 'datetime',
+            'deposit_paid_at' => 'datetime',
+            'deposit_refunded_at' => 'datetime',
         ];
+    }
+
+    public function depositStatus(): string
+    {
+        if ($this->deposit_refunded_at) return 'refunded';
+        if ($this->deposit_paid_at) return 'paid';
+        return 'unpaid';
     }
 
     public function tenant()

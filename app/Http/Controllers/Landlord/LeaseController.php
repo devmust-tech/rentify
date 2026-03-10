@@ -101,14 +101,14 @@ class LeaseController extends Controller
         return redirect()->route('landlord.leases.index')->with('success', 'Lease created. Awaiting tenant signature.');
     }
 
-    public function show(Request $request, Lease $lease)
+    public function show(Request $request, string $org, Lease $lease)
     {
         $this->authorizeLandlordLease($request, $lease);
         $lease->load(['tenant.user', 'unit.property', 'invoices.payments']);
         return view('landlord.leases.show', compact('lease'));
     }
 
-    public function edit(Request $request, Lease $lease)
+    public function edit(Request $request, string $org, Lease $lease)
     {
         $this->authorizeLandlordLease($request, $lease);
         $propertyIds = $this->getLandlordPropertyIds($request);
@@ -117,7 +117,7 @@ class LeaseController extends Controller
         return view('landlord.leases.edit', compact('lease', 'tenants', 'units'));
     }
 
-    public function update(Request $request, Lease $lease)
+    public function update(Request $request, string $org, Lease $lease)
     {
         $this->authorizeLandlordLease($request, $lease);
 
@@ -135,7 +135,7 @@ class LeaseController extends Controller
         return redirect()->route('landlord.leases.show', $lease)->with('success', 'Lease updated.');
     }
 
-    public function destroy(Request $request, Lease $lease)
+    public function destroy(Request $request, string $org, Lease $lease)
     {
         $this->authorizeLandlordLease($request, $lease);
         $lease->unit->update(['status' => UnitStatus::VACANT]);
@@ -143,7 +143,7 @@ class LeaseController extends Controller
         return redirect()->route('landlord.leases.index')->with('success', 'Lease deleted.');
     }
 
-    public function approve(Request $request, Lease $lease)
+    public function approve(Request $request, string $org, Lease $lease)
     {
         // Ensure the lease belongs to a unit in landlord's property
         if ($lease->unit->property->landlord_id !== $request->user()->landlord->id) {

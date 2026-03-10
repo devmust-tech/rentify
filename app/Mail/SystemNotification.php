@@ -13,15 +13,25 @@ class SystemNotification extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
+    public string $notificationSubject;
+    public string $messageBody;
+    public ?string $actionUrl;
+    public ?string $actionText;
+
     /**
      * Create a new message instance.
      */
     public function __construct(
-        public string $subject,
-        public string $messageBody,
-        public ?string $actionUrl = null,
-        public ?string $actionText = null,
-    ) {}
+        string $subject,
+        string $messageBody,
+        ?string $actionUrl = null,
+        ?string $actionText = null,
+    ) {
+        $this->notificationSubject = $subject;
+        $this->messageBody = $messageBody;
+        $this->actionUrl = $actionUrl;
+        $this->actionText = $actionText;
+    }
 
     /**
      * Get the message envelope.
@@ -29,7 +39,7 @@ class SystemNotification extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Rentify - ' . $this->subject,
+            subject: 'Rentify - ' . $this->notificationSubject,
         );
     }
 
@@ -41,7 +51,7 @@ class SystemNotification extends Mailable implements ShouldQueue
         return new Content(
             view: 'emails.system-notification',
             with: [
-                'subject' => $this->subject,
+                'subject' => $this->notificationSubject,
                 'messageBody' => $this->messageBody,
                 'actionUrl' => $this->actionUrl,
                 'actionText' => $this->actionText,

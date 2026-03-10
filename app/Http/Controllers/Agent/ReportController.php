@@ -107,7 +107,7 @@ class ReportController extends Controller
         return view('agent.reports.occupancy', compact('summary', 'overallTotal', 'overallOccupied', 'overallRate'));
     }
 
-    public function landlordStatement(Request $request, Landlord $landlord)
+    public function landlordStatement(Request $request, string $org, Landlord $landlord)
     {
         $landlord->load(['user', 'properties.units.leases.invoices.payments']);
 

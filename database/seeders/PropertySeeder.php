@@ -17,16 +17,16 @@ class PropertySeeder extends Seeder
         $landlords = Landlord::all();
 
         $properties = [
-            ['name' => 'Sunrise Apartments', 'type' => PropertyType::RESIDENTIAL, 'address' => 'Kilimani, Argwings Kodhek Rd', 'county' => '047', 'city' => 'Nairobi'],
-            ['name' => 'Green Park Estate', 'type' => PropertyType::RESIDENTIAL, 'address' => 'Langata, Langata Rd', 'county' => '047', 'city' => 'Nairobi'],
-            ['name' => 'Jamii Residences', 'type' => PropertyType::RESIDENTIAL, 'address' => 'South B, Mombasa Rd', 'county' => '047', 'city' => 'Nairobi'],
-            ['name' => 'Savanna Heights', 'type' => PropertyType::RESIDENTIAL, 'address' => 'Westlands, Waiyaki Way', 'county' => '047', 'city' => 'Nairobi'],
-            ['name' => 'Uhuru Towers', 'type' => PropertyType::COMMERCIAL, 'address' => 'CBD, Kenyatta Ave', 'county' => '047', 'city' => 'Nairobi'],
-            ['name' => 'Maisha Apartments', 'type' => PropertyType::RESIDENTIAL, 'address' => 'Ruaka, Limuru Rd', 'county' => '022', 'city' => 'Nairobi'],
-            ['name' => 'Baraka Court', 'type' => PropertyType::RESIDENTIAL, 'address' => 'Nyali, Links Rd', 'county' => '001', 'city' => 'Mombasa'],
-            ['name' => 'Tumaini Flats', 'type' => PropertyType::RESIDENTIAL, 'address' => 'Bamburi, Malindi Rd', 'county' => '001', 'city' => 'Mombasa'],
-            ['name' => 'Amani Gardens', 'type' => PropertyType::MIXED, 'address' => 'Milimani, Oginga Odinga Rd', 'county' => '042', 'city' => 'Kisumu'],
-            ['name' => 'Safari Villas', 'type' => PropertyType::RESIDENTIAL, 'address' => 'Section 58, Kenyatta Ave', 'county' => '032', 'city' => 'Nakuru'],
+            ['name' => 'Sunrise Apartments',  'type' => PropertyType::APARTMENT,  'address' => 'Kilimani, Argwings Kodhek Rd', 'county' => '047'],
+            ['name' => 'Green Park Estate',    'type' => PropertyType::HOUSE,      'address' => 'Langata, Langata Rd',          'county' => '047'],
+            ['name' => 'Jamii Residences',     'type' => PropertyType::APARTMENT,  'address' => 'South B, Mombasa Rd',          'county' => '047'],
+            ['name' => 'Savanna Heights',      'type' => PropertyType::APARTMENT,  'address' => 'Westlands, Waiyaki Way',       'county' => '047'],
+            ['name' => 'Uhuru Towers',         'type' => PropertyType::COMMERCIAL, 'address' => 'CBD, Kenyatta Ave',            'county' => '047'],
+            ['name' => 'Maisha Apartments',    'type' => PropertyType::APARTMENT,  'address' => 'Ruaka, Limuru Rd',             'county' => '022'],
+            ['name' => 'Baraka Court',         'type' => PropertyType::APARTMENT,  'address' => 'Nyali, Links Rd',              'county' => '001'],
+            ['name' => 'Tumaini Flats',        'type' => PropertyType::APARTMENT,  'address' => 'Bamburi, Malindi Rd',          'county' => '001'],
+            ['name' => 'Amani Gardens',        'type' => PropertyType::COMMERCIAL, 'address' => 'Milimani, Oginga Odinga Rd',   'county' => '042'],
+            ['name' => 'Safari Villas',        'type' => PropertyType::HOUSE,      'address' => 'Section 58, Kenyatta Ave',     'county' => '032'],
         ];
 
         foreach ($properties as $index => $data) {
@@ -37,7 +37,6 @@ class PropertySeeder extends Seeder
                 'property_type' => $data['type'],
                 'address' => $data['address'],
                 'county' => $data['county'],
-                'city' => $data['city'],
                 'description' => 'Well-maintained property in a prime location.',
                 'photos' => [],
             ]);

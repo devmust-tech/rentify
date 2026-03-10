@@ -80,7 +80,7 @@ class InvoiceController extends Controller
         return redirect()->route('landlord.invoices.index')->with('success', 'Invoice created.');
     }
 
-    public function show(Request $request, Invoice $invoice)
+    public function show(Request $request, string $org, Invoice $invoice)
     {
         $leaseIds = $this->getLandlordLeaseIds($request);
         if (!$leaseIds->contains($invoice->lease_id)) {

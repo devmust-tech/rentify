@@ -9,25 +9,42 @@ use Illuminate\Http\Request;
 
 class UnitController extends Controller
 {
-    public function index(Property $property)
+    public function index(string $org, Property $property)
     {
         $units = $property->units()->with('activeLease.tenant.user')->paginate(15);
         return view('agent.units.index', compact('property', 'units'));
     }
 
-    public function create(Property $property)
+    public function create(string $org, Property $property)
     {
         return view('agent.units.create', compact('property'));
     }
 
-    public function store(Request $request, Property $property)
+    public function store(Request $request, string $org, Property $property)
     {
         $validated = $request->validate([
             'unit_number' => 'required|string|max:50',
             'rent_amount' => 'required|numeric|min:0',
             'deposit_amount' => 'required|numeric|min:0',
             'size' => 'nullable|string|max:50',
+            'floor_number' => 'nullable|integer|min:0|max:200',
+            'size_sqm' => 'nullable|numeric|min:0',
+            'bedrooms' => 'nullable|integer|min:0|max:20',
+            'bathrooms' => 'nullable|integer|min:0|max:20',
+            'balcony' => 'nullable|boolean',
+            'furnishing' => 'nullable|string|in:unfurnished,semi_furnished,furnished',
+            'service_charge' => 'nullable|numeric|min:0',
+            'deposit_months' => 'nullable|integer|min:1|max:12',
+            'billing_cycle' => 'nullable|string|in:monthly,quarterly',
+            'available_from' => 'nullable|date',
+            'min_lease_months' => 'nullable|integer|min:1|max:60',
+            'meter_type' => 'nullable|string|in:shared,individual',
+            'electricity_meter' => 'nullable|string|max:100',
+            'water_meter' => 'nullable|string|max:100',
+            'video_tour_url' => 'nullable|url|max:500',
         ]);
+
+        $validated['balcony'] = $request->boolean('balcony');
 
         $property->units()->create([
             ...$validated,
@@ -37,18 +54,18 @@ class UnitController extends Controller
         return redirect()->route('agent.properties.show', $property)->with('success', 'Unit added.');
     }
 
-    public function show(Property $property, Unit $unit)
+    public function show(string $org, Property $property, Unit $unit)
     {
         $unit->load(['activeLease.tenant.user', 'maintenanceRequests']);
         return view('agent.units.show', compact('property', 'unit'));
     }
 
-    public function edit(Property $property, Unit $unit)
+    public function edit(string $org, Property $property, Unit $unit)
     {
         return view('agent.units.edit', compact('property', 'unit'));
     }
 
-    public function update(Request $request, Property $property, Unit $unit)
+    public function update(Request $request, string $org, Property $property, Unit $unit)
     {
         $validated = $request->validate([
             'unit_number' => 'required|string|max:50',
@@ -56,14 +73,31 @@ class UnitController extends Controller
             'deposit_amount' => 'required|numeric|min:0',
             'size' => 'nullable|string|max:50',
             'status' => 'required|string',
+            'floor_number' => 'nullable|integer|min:0|max:200',
+            'size_sqm' => 'nullable|numeric|min:0',
+            'bedrooms' => 'nullable|integer|min:0|max:20',
+            'bathrooms' => 'nullable|integer|min:0|max:20',
+            'balcony' => 'nullable|boolean',
+            'furnishing' => 'nullable|string|in:unfurnished,semi_furnished,furnished',
+            'service_charge' => 'nullable|numeric|min:0',
+            'deposit_months' => 'nullable|integer|min:1|max:12',
+            'billing_cycle' => 'nullable|string|in:monthly,quarterly',
+            'available_from' => 'nullable|date',
+            'min_lease_months' => 'nullable|integer|min:1|max:60',
+            'meter_type' => 'nullable|string|in:shared,individual',
+            'electricity_meter' => 'nullable|string|max:100',
+            'water_meter' => 'nullable|string|max:100',
+            'video_tour_url' => 'nullable|url|max:500',
         ]);
+
+        $validated['balcony'] = $request->boolean('balcony');
 
         $unit->update($validated);
 
         return redirect()->route('agent.properties.show', $property)->with('success', 'Unit updated.');
     }
 
-    public function destroy(Property $property, Unit $unit)
+    public function destroy(string $org, Property $property, Unit $unit)
     {
         $unit->delete();
         return redirect()->route('agent.properties.show', $property)->with('success', 'Unit deleted.');

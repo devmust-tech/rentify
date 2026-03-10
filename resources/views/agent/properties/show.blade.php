@@ -89,7 +89,7 @@
             <h3 class="text-base font-semibold text-gray-900">Property Details</h3>
         </div>
         <div class="px-6 py-6">
-            <dl class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+            <dl class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
                 <div>
                     <dt class="text-sm font-medium text-gray-500">Landlord</dt>
                     <dd class="mt-1 text-sm font-semibold text-gray-900">{{ $property->landlord->user->name ?? 'N/A' }}</dd>
@@ -101,18 +101,127 @@
                     </dd>
                 </div>
                 <div>
-                    <dt class="text-sm font-medium text-gray-500">Address</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $property->address }}</dd>
-                </div>
-                <div>
                     <dt class="text-sm font-medium text-gray-500">County</dt>
                     <dd class="mt-1 text-sm text-gray-900">{{ $property->county_name }}</dd>
                 </div>
-                <div class="sm:col-span-2">
-                    <dt class="text-sm font-medium text-gray-500">Description</dt>
-                    <dd class="mt-1 text-sm text-gray-700 leading-relaxed">{{ $property->description ?? 'No description provided.' }}</dd>
+                <div class="lg:col-span-2">
+                    <dt class="text-sm font-medium text-gray-500">Address</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ $property->address }}</dd>
                 </div>
+                @if($property->latitude && $property->longitude)
+                <div class="lg:col-span-3" x-data="{
+                    init() {
+                        this.$nextTick(() => {
+                            const map = new google.maps.Map(this.$refs.map, {
+                                center: { lat: {{ $property->latitude }}, lng: {{ $property->longitude }} },
+                                zoom: 16,
+                                mapTypeControl: false,
+                                streetViewControl: false,
+                                fullscreenControl: false,
+                                scrollwheel: false,
+                                styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }]
+                            });
+                            const marker = new google.maps.Marker({
+                                position: { lat: {{ $property->latitude }}, lng: {{ $property->longitude }} },
+                                map: map
+                            });
+                            const infoWindow = new google.maps.InfoWindow({ content: '{{ addslashes($property->name) }}' });
+                            infoWindow.open(map, marker);
+                        });
+                    }
+                }">
+                    <dt class="text-sm font-medium text-gray-500 mb-2">Location</dt>
+                    <dd>
+                        <div x-ref="map" class="h-48 w-full rounded-lg ring-1 ring-gray-200 z-0"></div>
+                        <p class="mt-1.5 text-xs text-gray-400 font-mono">{{ $property->latitude }}, {{ $property->longitude }}</p>
+                    </dd>
+                </div>
+                @endif
+                @if($property->year_built)
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Year Built</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ $property->year_built }}</dd>
+                </div>
+                @endif
+                @if($property->last_renovated)
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Last Renovated</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ $property->last_renovated }}</dd>
+                </div>
+                @endif
+                @if($property->total_floors)
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Total Floors</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ $property->total_floors }}</dd>
+                </div>
+                @endif
+                @if($property->parking_type)
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Parking</dt>
+                    <dd class="mt-1 text-sm text-gray-900 capitalize">{{ str_replace('_', ' ', $property->parking_type) }}</dd>
+                </div>
+                @endif
+                @if($property->water_storage_liters)
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Water Storage</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ number_format($property->water_storage_liters) }} L</dd>
+                </div>
+                @endif
+                @if($property->pet_policy)
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Pet Policy</dt>
+                    <dd class="mt-1 text-sm text-gray-900 capitalize">{{ str_replace('_', ' ', $property->pet_policy) }}</dd>
+                </div>
+                @endif
+                @if($property->smoking_policy)
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Smoking Policy</dt>
+                    <dd class="mt-1 text-sm text-gray-900 capitalize">{{ str_replace('_', ' ', $property->smoking_policy) }}</dd>
+                </div>
+                @endif
             </dl>
+
+            {{-- Infrastructure badges --}}
+            @if($property->fiber_ready || $property->backup_power || $property->ev_charging)
+                <div class="mt-6 pt-6 border-t border-gray-100">
+                    <dt class="text-sm font-medium text-gray-500 mb-2">Infrastructure</dt>
+                    <div class="flex flex-wrap gap-2">
+                        @if($property->fiber_ready)
+                            <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-200">Fiber Ready</span>
+                        @endif
+                        @if($property->backup_power)
+                            <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-200">Backup Power</span>
+                        @endif
+                        @if($property->ev_charging)
+                            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">EV Charging</span>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
+            {{-- Security features --}}
+            @if($property->security_features && count($property->security_features))
+                <div class="mt-6 pt-6 border-t border-gray-100">
+                    <dt class="text-sm font-medium text-gray-500 mb-2">Security</dt>
+                    <div class="flex flex-wrap gap-2">
+                        @php
+                            $securityLabels = ['cctv' => 'CCTV', 'gate_access' => 'Controlled Gate', 'guards' => 'Security Guards', 'smart_locks' => 'Smart Locks', 'intercom' => 'Intercom', 'perimeter_wall' => 'Perimeter Wall', 'alarm' => 'Alarm System'];
+                        @endphp
+                        @foreach($property->security_features as $feature)
+                            <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-200">
+                                {{ $securityLabels[$feature] ?? ucfirst(str_replace('_', ' ', $feature)) }}
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            @if($property->description)
+                <div class="mt-6 pt-6 border-t border-gray-100">
+                    <dt class="text-sm font-medium text-gray-500 mb-1">Description</dt>
+                    <dd class="text-sm text-gray-700 leading-relaxed">{{ $property->description }}</dd>
+                </div>
+            @endif
         </div>
     </div>
 
@@ -281,4 +390,9 @@
             </tbody>
         </table>
     </div>
+@if($property->latitude && $property->longitude)
+@push('head-scripts')
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_key') }}"></script>
+@endpush
+@endif
 </x-app-layout>

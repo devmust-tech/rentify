@@ -28,19 +28,19 @@ class MaintenanceController extends Controller
         return view('agent.maintenance.index', compact('maintenanceRequests'));
     }
 
-    public function show(MaintenanceRequest $maintenance)
+    public function show(string $org, MaintenanceRequest $maintenance)
     {
         $maintenance->load(['unit.property', 'tenant.user', 'notes.user']);
         return view('agent.maintenance.show', compact('maintenance'));
     }
 
-    public function edit(MaintenanceRequest $maintenance)
+    public function edit(string $org, MaintenanceRequest $maintenance)
     {
         $maintenance->load(['unit.property', 'tenant.user']);
         return view('agent.maintenance.edit', compact('maintenance'));
     }
 
-    public function update(Request $request, MaintenanceRequest $maintenance)
+    public function update(Request $request, string $org, MaintenanceRequest $maintenance)
     {
         $validated = $request->validate([
             'status' => 'required|string',
@@ -80,7 +80,7 @@ class MaintenanceController extends Controller
         return redirect()->route('agent.maintenance.show', $maintenance)->with('success', 'Request updated.');
     }
 
-    public function addNote(Request $request, MaintenanceRequest $maintenance)
+    public function addNote(Request $request, string $org, MaintenanceRequest $maintenance)
     {
         $validated = $request->validate([
             'note' => 'required|string|max:5000',

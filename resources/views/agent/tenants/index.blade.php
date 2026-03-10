@@ -12,10 +12,48 @@
         </div>
     </x-slot>
 
+    {{-- Search --}}
+    <form method="GET" action="{{ route('agent.tenants.index') }}" class="mb-4">
+        <div class="flex gap-3">
+            <input type="text" name="search" value="{{ request('search') }}"
+                   placeholder="Search by name or email..."
+                   class="w-full max-w-sm rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition-colors">Search</button>
+            @if(request('search'))
+                <a href="{{ route('agent.tenants.index') }}" class="rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">Clear</a>
+            @endif
+        </div>
+    </form>
+
+    <div x-data="{ selected: [], toggleAll(ids) { this.selected = this.selected.length === ids.length ? [] : [...ids]; } }">
+
+    {{-- Bulk Action Bar --}}
+    <div x-show="selected.length > 0" x-transition
+         class="mb-3 flex items-center justify-between rounded-xl bg-indigo-600 px-5 py-3 shadow-lg">
+        <span class="text-sm font-semibold text-white" x-text="selected.length + ' tenant' + (selected.length === 1 ? '' : 's') + ' selected'"></span>
+        <form method="POST" action="{{ route('agent.tenants.bulk-delete') }}" x-ref="bulkDeleteForm"
+              @confirm-bulk-delete.window="$el.submit()">
+            @csrf @method('DELETE')
+            <template x-for="id in selected" :key="id"><input type="hidden" name="ids[]" :value="id"></template>
+            <button type="button" @click="$dispatch('open-modal', 'bulk-delete')"
+                    class="inline-flex items-center gap-x-1.5 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                Delete Selected
+            </button>
+        </form>
+        <x-confirm-modal name="bulk-delete" title="Delete Tenants"
+            :message="'The selected tenants and their user accounts will be permanently removed.'"
+            confirmLabel="Delete Tenants" />
+    </div>
+
     <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5">
         <table class="min-w-full divide-y divide-gray-200">
             <thead>
                 <tr>
+                    <th class="w-10 bg-gray-50/50 px-4 py-3.5">
+                        <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                               @click="toggleAll({{ json_encode($tenants->pluck('id')->values()) }})">
+                    </th>
                     <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Name</th>
                     <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Email</th>
                     <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Phone</th>
@@ -25,7 +63,11 @@
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @forelse($tenants as $tenant)
-                    <tr class="transition-colors hover:bg-gray-50/50">
+                    <tr class="transition-colors hover:bg-gray-50/50" :class="selected.includes('{{ $tenant->id }}') ? 'bg-indigo-50/40' : ''">
+                        <td class="w-10 px-4 py-4">
+                            <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                   value="{{ $tenant->id }}" x-model="selected">
+                        </td>
                         <td class="px-6 py-4 text-sm">
                             <a href="{{ route('agent.tenants.show', $tenant) }}"
                                class="font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
@@ -57,7 +99,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-6 py-16 text-center">
+                        <td colspan="6" class="px-6 py-16 text-center">
                             <div class="flex flex-col items-center">
                                 <svg class="h-12 w-12 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
@@ -66,9 +108,6 @@
                                 <p class="mt-1 text-sm text-gray-500">Get started by adding your first tenant.</p>
                                 <a href="{{ route('agent.tenants.create') }}"
                                    class="mt-4 inline-flex items-center gap-x-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">
-                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                    </svg>
                                     Add Tenant
                                 </a>
                             </div>
@@ -84,4 +123,5 @@
             </div>
         @endif
     </div>
+    </div>{{-- end x-data --}}
 </x-app-layout>

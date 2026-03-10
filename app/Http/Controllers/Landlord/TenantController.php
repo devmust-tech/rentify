@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Landlord;
 use App\Http\Controllers\Controller;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
+use App\Mail\TenantInvitation;
 use App\Models\Lease;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 class TenantController extends Controller
 {
@@ -18,14 +21,13 @@ class TenantController extends Controller
         $landlordId = $request->user()->landlord->id;
 
         // Get all tenants with leases on landlord's properties
-        $leases = Lease::whereHas('unit.property', function ($query) use ($landlordId) {
+        $tenants = Tenant::whereHas('leases.unit.property', function ($query) use ($landlordId) {
             $query->where('landlord_id', $landlordId);
         })
-        ->with(['tenant.user', 'unit.property'])
-        ->latest()
+        ->with(['user', 'leases.unit.property'])
         ->paginate(15);
 
-        return view('landlord.tenants.index', compact('leases'));
+        return view('landlord.tenants.index', compact('tenants'));
     }
 
     public function create()
@@ -39,7 +41,6 @@ class TenantController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'phone' => 'required|string',
-            'password' => 'required|string|min:8',
             'emergency_contact_name' => 'nullable|string|max:255',
             'emergency_contact_phone' => 'nullable|string|max:20',
             'emergency_contact_relationship' => 'nullable|string|max:50',
@@ -50,10 +51,9 @@ class TenantController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
-            'password' => Hash::make($request->password),
+            'password' => bcrypt(Str::random(32)),
             'role' => UserRole::TENANT,
-            'status' => UserStatus::ACTIVE,
-            'email_verified_at' => now(),
+            'status' => UserStatus::INACTIVE,
         ]);
 
         $idDocPath = null;
@@ -70,29 +70,39 @@ class TenantController extends Controller
             ]);
         }
 
-        Tenant::create([
+        $tenant = Tenant::create([
             'user_id' => $user->id,
             'phone' => $request->phone,
             'emergency_contact' => $emergencyContact,
             'id_document' => $idDocPath,
         ]);
 
-        return redirect()->route('landlord.tenants.index')->with('success', 'Tenant created.');
+        // Auto-send invitation email
+        $org = app('currentOrganization');
+        $inviteUrl = URL::temporarySignedRoute(
+            'tenant.invitation.show',
+            now()->addHours(72),
+            ['tenant' => $tenant->id]
+        );
+        Mail::to($user->email)->queue(new TenantInvitation($tenant, $inviteUrl, $org->name));
+
+        return redirect()->route('landlord.tenants.index')
+            ->with('success', 'Tenant created. An invitation email has been sent to ' . $user->email . '.');
     }
 
-    public function show(Request $request, Tenant $tenant)
+    public function show(Request $request, string $org, Tenant $tenant)
     {
         $tenant->load(['user', 'leases.unit.property', 'maintenanceRequests.unit']);
         return view('landlord.tenants.show', compact('tenant'));
     }
 
-    public function edit(Tenant $tenant)
+    public function edit(string $org, Tenant $tenant)
     {
         $tenant->load('user');
         return view('landlord.tenants.edit', compact('tenant'));
     }
 
-    public function update(Request $request, Tenant $tenant)
+    public function update(Request $request, string $org, Tenant $tenant)
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -133,7 +143,7 @@ class TenantController extends Controller
         return redirect()->route('landlord.tenants.show', $tenant)->with('success', 'Tenant updated.');
     }
 
-    public function destroy(Tenant $tenant)
+    public function destroy(string $org, Tenant $tenant)
     {
         $tenant->user->delete();
         $tenant->delete();

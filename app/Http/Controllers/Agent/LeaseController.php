@@ -13,6 +13,7 @@ use App\Models\Property;
 use App\Models\RentNegotiation;
 use App\Models\Tenant;
 use App\Models\Unit;
+use App\Services\ActivityLogger;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -25,9 +26,13 @@ class LeaseController extends Controller
         $unitIds = Unit::whereIn('property_id', $propertyIds)->pluck('id');
 
         $leases = Lease::whereIn('unit_id', $unitIds)
+            ->when($request->search, fn($q) => $q->whereHas('tenant.user', fn($u) =>
+                $u->where('name', 'like', '%' . $request->search . '%')
+            ))
+            ->when($request->status, fn($q) => $q->where('status', $request->status))
             ->with(['tenant.user', 'unit.property'])
             ->orderByDesc('created_at')
-            ->paginate(15);
+            ->paginate(15)->withQueryString();
 
         return view('agent.leases.index', compact('leases'));
     }
@@ -76,14 +81,14 @@ class LeaseController extends Controller
         return redirect()->route('agent.leases.index')->with('success', 'Lease created. Awaiting tenant signature.');
     }
 
-    public function show(Request $request, Lease $lease)
+    public function show(Request $request, string $org, Lease $lease)
     {
         $this->authorizeAgentLease($request, $lease);
         $lease->load(['tenant.user', 'unit.property', 'invoices.payments', 'negotiations.proposer']);
         return view('agent.leases.show', compact('lease'));
     }
 
-    public function edit(Request $request, Lease $lease)
+    public function edit(Request $request, string $org, Lease $lease)
     {
         $this->authorizeAgentLease($request, $lease);
         $propertyIds = Property::where('agent_id', $request->user()->id)->pluck('id');
@@ -92,7 +97,7 @@ class LeaseController extends Controller
         return view('agent.leases.edit', compact('lease', 'tenants', 'units'));
     }
 
-    public function update(Request $request, Lease $lease)
+    public function update(Request $request, string $org, Lease $lease)
     {
         $this->authorizeAgentLease($request, $lease);
         $validated = $request->validate([
@@ -104,12 +109,22 @@ class LeaseController extends Controller
             'status' => 'required|string',
         ]);
 
+        $oldStatus = $lease->status->value;
         $lease->update($validated);
+
+        if ($oldStatus !== $validated['status']) {
+            app(ActivityLogger::class)->log(
+                'lease.status_changed',
+                "Lease status changed from {$oldStatus} to {$validated['status']} for {$lease->tenant->user->name}",
+                $lease,
+                ['old_status' => $oldStatus, 'new_status' => $validated['status']],
+            );
+        }
 
         return redirect()->route('agent.leases.show', $lease)->with('success', 'Lease updated.');
     }
 
-    public function destroy(Request $request, Lease $lease)
+    public function destroy(Request $request, string $org, Lease $lease)
     {
         $this->authorizeAgentLease($request, $lease);
         $lease->unit->update(['status' => UnitStatus::VACANT]);
@@ -117,7 +132,7 @@ class LeaseController extends Controller
         return redirect()->route('agent.leases.index')->with('success', 'Lease deleted.');
     }
 
-    public function respondToNegotiation(Request $request, Lease $lease, RentNegotiation $negotiation)
+    public function respondToNegotiation(Request $request, string $org, Lease $lease, RentNegotiation $negotiation)
     {
         $this->authorizeAgentLease($request, $lease);
 
@@ -203,6 +218,64 @@ class LeaseController extends Controller
         );
 
         return back()->with('success', 'Counter-offer of KSh ' . number_format($request->input('counter_rent'), 2) . ' sent.');
+    }
+
+    public function bulkDelete(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $request->validate(['ids' => 'required|array', 'ids.*' => 'string']);
+
+        $propertyIds = Property::where('agent_id', $request->user()->id)->pluck('id');
+        $unitIds     = Unit::whereIn('property_id', $propertyIds)->pluck('id');
+
+        $count = Lease::whereIn('unit_id', $unitIds)->whereIn('id', $request->ids)->count();
+        Lease::whereIn('unit_id', $unitIds)->whereIn('id', $request->ids)->delete();
+
+        return redirect()->route('agent.leases.index')
+            ->with('success', "{$count} " . \Illuminate\Support\Str::plural('lease', $count) . " deleted.");
+    }
+
+    public function markDepositPaid(Request $request, string $org, Lease $lease): \Illuminate\Http\RedirectResponse
+    {
+        $this->authorizeAgentLease($request, $lease);
+
+        if ($lease->deposit_paid_at) {
+            return back()->with('error', 'Deposit is already marked as paid.');
+        }
+
+        $lease->load('tenant.user');
+        $lease->update(['deposit_paid_at' => now()]);
+
+        app(ActivityLogger::class)->log(
+            'deposit.paid',
+            "Deposit of KSh " . number_format((float) $lease->deposit, 2) . " marked as paid for {$lease->tenant->user->name}",
+            $lease,
+        );
+
+        return back()->with('success', 'Deposit marked as paid.');
+    }
+
+    public function markDepositRefunded(Request $request, string $org, Lease $lease): \Illuminate\Http\RedirectResponse
+    {
+        $this->authorizeAgentLease($request, $lease);
+
+        if (!$lease->deposit_paid_at) {
+            return back()->with('error', 'Deposit has not been marked as paid yet.');
+        }
+
+        if ($lease->deposit_refunded_at) {
+            return back()->with('error', 'Deposit is already marked as refunded.');
+        }
+
+        $lease->load('tenant.user');
+        $lease->update(['deposit_refunded_at' => now()]);
+
+        app(ActivityLogger::class)->log(
+            'deposit.refunded',
+            "Deposit of KSh " . number_format((float) $lease->deposit, 2) . " refunded to {$lease->tenant->user->name}",
+            $lease,
+        );
+
+        return back()->with('success', 'Deposit marked as refunded.');
     }
 
     private function authorizeAgentLease(Request $request, Lease $lease): void

@@ -85,6 +85,65 @@
         </div>
     </div>
 
+    {{-- Deposit Tracking Section --}}
+    @if($lease->deposit > 0)
+        <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 mb-8">
+            <div class="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-x-3">
+                        <div class="rounded-lg bg-amber-100 p-2">
+                            <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900">Security Deposit</h3>
+                            <p class="text-sm text-gray-500">KSh {{ number_format($lease->deposit, 2) }}</p>
+                        </div>
+                    </div>
+                    @php $depositStatus = $lease->depositStatus(); @endphp
+                    @if($depositStatus === 'refunded')
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600 ring-1 ring-gray-200">Refunded</span>
+                    @elseif($depositStatus === 'paid')
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">Paid</span>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">Unpaid</span>
+                    @endif
+                </div>
+            </div>
+            <div class="px-6 py-5">
+                <div class="flex flex-wrap items-center gap-6">
+                    <div>
+                        <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">Received</p>
+                        <p class="mt-1 text-sm font-semibold text-gray-900">{{ $lease->deposit_paid_at?->format('d/m/Y') ?? '—' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">Refunded</p>
+                        <p class="mt-1 text-sm font-semibold text-gray-900">{{ $lease->deposit_refunded_at?->format('d/m/Y') ?? '—' }}</p>
+                    </div>
+                    <div class="ml-auto flex items-center gap-3">
+                        @if(!$lease->deposit_paid_at)
+                            <form method="POST" action="{{ route('agent.leases.deposit.paid', $lease) }}">
+                                @csrf
+                                <button class="inline-flex items-center gap-x-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 transition-colors">
+                                    Mark Deposit Paid
+                                </button>
+                            </form>
+                        @elseif(!$lease->deposit_refunded_at)
+                            <form method="POST" action="{{ route('agent.leases.deposit.refunded', $lease) }}">
+                                @csrf
+                                <button class="inline-flex items-center gap-x-1.5 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500 transition-colors">
+                                    Mark Deposit Refunded
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+                </div>
+                @if(session('error'))
+                    <p class="mt-3 text-sm text-red-600">{{ session('error') }}</p>
+                @endif
+            </div>
+        </div>
+    @endif
+
     {{-- Rent Negotiation Section --}}
     @if($lease->negotiations->count() > 0 || $lease->status->value === 'pending')
         <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 mb-8">

@@ -9,26 +9,28 @@
         <table class="min-w-full divide-y divide-gray-200">
             <thead>
                 <tr>
-                    <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Unit</th>
-                    <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Property</th>
+                    <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Title</th>
+                    <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Unit / Property</th>
                     <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Tenant</th>
-                    <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Description</th>
                     <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Priority</th>
                     <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
+                    <th class="bg-gray-50/50 px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Date</th>
                     <th class="bg-gray-50/50 px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @forelse($maintenanceRequests as $request)
                     <tr class="hover:bg-gray-50/50 transition-colors">
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $request->title }}</td>
                         <td class="px-6 py-4 text-sm">
                             <span class="font-medium text-gray-900">{{ $request->unit->unit_number }}</span>
+                            <span class="text-gray-400"> · </span>
+                            <span class="text-gray-600">{{ $request->unit->property->name }}</span>
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-700">{{ $request->unit->property->name }}</td>
                         <td class="px-6 py-4 text-sm text-gray-700">{{ $request->tenant->user->name }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">{{ Str::limit($request->description, 50) }}</td>
                         <td class="px-6 py-4 text-sm"><x-status-badge :status="$request->priority" /></td>
                         <td class="px-6 py-4 text-sm"><x-status-badge :status="$request->status" /></td>
+                        <td class="px-6 py-4 text-sm text-gray-500">{{ $request->created_at->format('d M Y') }}</td>
                         <td class="px-6 py-4 text-right text-sm">
                             <div class="inline-flex items-center gap-x-3">
                                 <a href="{{ route('agent.maintenance.show', $request) }}" class="font-medium text-indigo-600 hover:text-indigo-500 transition-colors">View</a>

@@ -76,12 +76,27 @@
                 </dl>
 
                 {{-- Signature Display --}}
-                @if($activeLease->signed_at && $activeLease->signature_url)
+                @if($activeLease->signed_at)
                     <div class="mt-6 border-t border-gray-100 pt-6">
-                        <dt class="text-sm font-medium text-gray-500 mb-3">Your Signature</dt>
-                        <div class="inline-block rounded-lg border border-gray-200 bg-gray-50 p-3">
-                            <img src="{{ asset('storage/' . $activeLease->signature_url) }}" alt="Tenant signature" class="h-20">
-                        </div>
+                        <p class="text-sm font-medium text-gray-500 mb-3">Your Signature</p>
+                        @if($activeLease->signature_url)
+                            <div class="inline-block rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                                <img src="{{ asset('storage/' . $activeLease->signature_url) }}"
+                                     alt="Tenant signature"
+                                     class="h-20 max-w-xs object-contain"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="hidden items-center gap-2 text-sm text-gray-500 h-20">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                    Digitally signed on {{ $activeLease->signed_at->format('d M Y') }}
+                                </div>
+                            </div>
+                            <p class="mt-2 text-xs text-gray-400">Signed on {{ $activeLease->signed_at->format('d M Y \a\t H:i') }}</p>
+                        @else
+                            <div class="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Digitally signed on {{ $activeLease->signed_at->format('d M Y') }}
+                            </div>
+                        @endif
                     </div>
                 @endif
             </div>

@@ -7,6 +7,8 @@ use App\Enums\NotificationType;
 use App\Models\MaintenanceRequest;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class MaintenanceController extends Controller
 {
@@ -33,6 +35,7 @@ class MaintenanceController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'priority' => 'required|in:low,medium,high,urgent',
+            'photos' => 'nullable|array|max:10',
             'photos.*' => 'nullable|image|max:2048',
         ]);
 
@@ -45,8 +48,15 @@ class MaintenanceController extends Controller
 
         $photos = [];
         if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $photo) {
-                $photos[] = $photo->store('maintenance', 'public');
+            foreach (($request->file('photos') ?? []) as $photo) {
+                if (! $photo instanceof UploadedFile || ! $photo->isValid()) {
+                    continue;
+                }
+
+                $storedPhoto = $this->storePhotoFile($photo);
+                if (! empty($storedPhoto)) {
+                    $photos[] = $storedPhoto;
+                }
             }
         }
 
@@ -77,7 +87,7 @@ class MaintenanceController extends Controller
             ->with('success', 'Maintenance request submitted');
     }
 
-    public function show(Request $request, MaintenanceRequest $maintenance)
+    public function show(Request $request, string $org, MaintenanceRequest $maintenance)
     {
         $tenant = $request->user()->tenant;
         if ($maintenance->tenant_id !== $tenant->id) {
@@ -86,5 +96,32 @@ class MaintenanceController extends Controller
 
         $maintenance->load(['unit.property', 'notes.user']);
         return view('tenant.maintenance.show', compact('maintenance'));
+    }
+
+    private function storePhotoFile(UploadedFile $photo): ?string
+    {
+        $sourcePath = $photo->getPathname();
+
+        if (empty($sourcePath) || ! is_file($sourcePath) || ! is_readable($sourcePath)) {
+            return null;
+        }
+
+        $targetPath = 'maintenance/' . $photo->hashName();
+        $stream = fopen($sourcePath, 'r');
+
+        if (! is_resource($stream)) {
+            return null;
+        }
+
+        try {
+            $stored = Storage::disk('public')->put($targetPath, $stream);
+        } catch (\Throwable $e) {
+            report($e);
+            return null;
+        } finally {
+            fclose($stream);
+        }
+
+        return $stored ? $targetPath : null;
     }
 }

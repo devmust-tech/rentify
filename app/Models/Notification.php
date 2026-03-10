@@ -3,15 +3,17 @@
 namespace App\Models;
 
 use App\Enums\NotificationType;
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Notification extends Model
 {
-    use HasFactory, HasUlids;
+    use HasFactory, HasUlids, BelongsToOrganization;
 
     protected $fillable = [
+        'organization_id',
         'user_id',
         'type',
         'subject',

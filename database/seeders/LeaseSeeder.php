@@ -28,7 +28,7 @@ class LeaseSeeder extends Seeder
                 'start_date' => $startDate,
                 'end_date' => $endDate,
                 'rent_amount' => $occupiedUnits[$i]->rent_amount,
-                'deposit_amount' => $occupiedUnits[$i]->deposit_amount ?? $occupiedUnits[$i]->rent_amount,
+                'deposit' => $occupiedUnits[$i]->deposit_amount ?? $occupiedUnits[$i]->rent_amount,
                 'status' => LeaseStatus::ACTIVE,
                 'notes' => null,
             ]);

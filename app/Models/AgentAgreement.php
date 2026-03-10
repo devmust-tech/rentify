@@ -3,15 +3,17 @@
 namespace App\Models;
 
 use App\Enums\AgreementStatus;
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AgentAgreement extends Model
 {
-    use HasFactory, HasUlids;
+    use HasFactory, HasUlids, BelongsToOrganization;
 
     protected $fillable = [
+        'organization_id',
         'agent_id',
         'landlord_id',
         'commission_rate',

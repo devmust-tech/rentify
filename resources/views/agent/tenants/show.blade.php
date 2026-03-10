@@ -10,6 +10,21 @@
                    class="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">
                     Back to Tenants
                 </a>
+                {{-- Send / resend invitation email --}}
+                <form method="POST" action="{{ route('agent.tenants.invite', $tenant) }}"
+                    @confirm-send-invite.window="$el.submit()">
+                    @csrf
+                    <button type="button" @click="$dispatch('open-modal', 'send-invite')"
+                        class="inline-flex items-center gap-x-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">
+                        <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                        </svg>
+                        Send Invite
+                    </button>
+                </form>
+                <x-confirm-modal name="send-invite" title="Send Invitation"
+                    message="An invitation email will be sent to {{ $tenant->user->email }} with a link to set their password and activate their account."
+                    confirmLabel="Send Invite" variant="info" />
                 <a href="{{ route('agent.tenants.edit', $tenant) }}"
                    class="inline-flex items-center gap-x-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">
                     <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -53,28 +68,44 @@
                         </dd>
                     </div>
                     @php $ec = is_array($tenant->emergency_contact) ? $tenant->emergency_contact : json_decode($tenant->emergency_contact, true); @endphp
-                    <div class="rounded-lg bg-gray-50/50 p-4 sm:col-span-2">
-                        <dt class="text-xs font-medium uppercase tracking-wider text-gray-500 mb-2">Emergency Contact</dt>
-                        @if($ec && ($ec['name'] ?? null))
-                            <dd class="grid grid-cols-3 gap-4 text-sm">
-                                <div>
-                                    <span class="text-gray-500">Name:</span>
-                                    <span class="ml-1 font-medium text-gray-900">{{ $ec['name'] }}</span>
+                    <div class="overflow-hidden rounded-xl border border-orange-100 sm:col-span-2">
+                        <div class="flex items-center gap-3 border-b border-orange-100 bg-orange-50 px-4 py-3">
+                            <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-orange-100">
+                                <svg class="h-3.5 w-3.5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/>
+                                </svg>
+                            </div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-orange-800">Emergency Contact</p>
+                        </div>
+                        <div class="bg-orange-50/30 px-4 py-4">
+                            @if($ec && ($ec['name'] ?? null))
+                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                    <div class="flex items-start gap-2.5">
+                                        <svg class="mt-0.5 h-4 w-4 shrink-0 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                        <div>
+                                            <p class="text-xs text-gray-500">Full Name</p>
+                                            <p class="mt-0.5 text-sm font-semibold text-gray-900">{{ $ec['name'] }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-2.5">
+                                        <svg class="mt-0.5 h-4 w-4 shrink-0 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
+                                        <div>
+                                            <p class="text-xs text-gray-500">Phone Number</p>
+                                            <p class="mt-0.5 text-sm font-semibold text-gray-900">{{ $ec['phone'] ?? '—' }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start gap-2.5">
+                                        <svg class="mt-0.5 h-4 w-4 shrink-0 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+                                        <div>
+                                            <p class="text-xs text-gray-500">Relationship</p>
+                                            <p class="mt-0.5 text-sm font-semibold text-gray-900">{{ $ec['relationship'] ?? '—' }}</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <span class="text-gray-500">Phone:</span>
-                                    <span class="ml-1 font-medium text-gray-900">{{ $ec['phone'] ?? 'N/A' }}</span>
-                                </div>
-                                <div>
-                                    <span class="text-gray-500">Relationship:</span>
-                                    <span class="ml-1 font-medium text-gray-900">{{ $ec['relationship'] ?? 'N/A' }}</span>
-                                </div>
-                            </dd>
-                        @elseif(is_string($tenant->emergency_contact) && $tenant->emergency_contact)
-                            <dd class="text-sm font-medium text-gray-900">{{ $tenant->emergency_contact }}</dd>
-                        @else
-                            <dd class="text-sm text-gray-400">Not provided</dd>
-                        @endif
+                            @else
+                                <p class="text-sm text-orange-500/70">No emergency contact provided.</p>
+                            @endif
+                        </div>
                     </div>
                 </dl>
             </div>

@@ -35,4 +35,19 @@ return [
         ],
     ],
 
+    'google' => [
+        'maps_key' => env('GOOGLE_MAPS_KEY'),
+    ],
+
+    'stripe' => [
+        'key'            => env('STRIPE_KEY'),
+        'secret'         => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'prices' => [
+            'basic'      => env('STRIPE_PRICE_BASIC'),
+            'pro'        => env('STRIPE_PRICE_PRO'),
+            'enterprise' => env('STRIPE_PRICE_ENTERPRISE'),
+        ],
+    ],
+
 ];

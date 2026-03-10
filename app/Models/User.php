@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
+use App\Models\Concerns\BelongsToOrganization;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -11,9 +13,10 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasFactory, HasUlids, Notifiable;
+    use HasFactory, HasUlids, Notifiable, BelongsToOrganization;
 
     protected $fillable = [
+        'organization_id',
         'name',
         'email',
         'phone',
@@ -55,6 +58,11 @@ class User extends Authenticatable
     public function agentAgreements()
     {
         return $this->hasMany(AgentAgreement::class, 'agent_id');
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 
     public function isAgent(): bool

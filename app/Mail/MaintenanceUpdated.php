@@ -49,6 +49,7 @@ class MaintenanceUpdated extends Mailable implements ShouldQueue
                 'propertyName' => $this->maintenanceRequest->unit->property->name,
                 'unitName' => $this->maintenanceRequest->unit->unit_number,
                 'resolutionNotes' => $this->maintenanceRequest->resolution_notes,
+                'appUrl' => $this->maintenanceRequest->organization?->subdomainUrl() ?? config('app.url'),
             ],
         );
     }

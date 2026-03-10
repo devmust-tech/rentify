@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\Tenant;
-use App\Models\Landlord;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,7 +35,6 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'phone' => ['required', 'string', 'regex:/^(\+254|254|0)[17][0-9]{8}$/', 'unique:users'],
-            'role' => ['required', 'string', 'in:agent,landlord'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -45,23 +42,10 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
-            'role' => UserRole::from($request->role),
+            'role' => UserRole::AGENT,
             'status' => UserStatus::ACTIVE,
             'password' => Hash::make($request->password),
         ]);
-
-        // Create related role record
-        if ($user->role === UserRole::TENANT) {
-            Tenant::create([
-                'user_id' => $user->id,
-                'phone' => $request->phone,
-            ]);
-        } elseif ($user->role === UserRole::LANDLORD) {
-            Landlord::create([
-                'user_id' => $user->id,
-            ]);
-        }
-        // Agents don't need a separate record
 
         event(new Registered($user));
 

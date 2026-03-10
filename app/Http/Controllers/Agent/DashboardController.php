@@ -31,6 +31,7 @@ class DashboardController extends Controller
         $activeLeaseIds = DB::table('leases')
             ->whereIn('unit_id', $unitIds)
             ->where('status', 'active')
+            ->where('organization_id', app()->bound('currentOrganization') ? app('currentOrganization')->id : null)
             ->pluck('id');
 
         // Calculate stats

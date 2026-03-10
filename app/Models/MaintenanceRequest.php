@@ -4,15 +4,17 @@ namespace App\Models;
 
 use App\Enums\MaintenancePriority;
 use App\Enums\MaintenanceStatus;
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class MaintenanceRequest extends Model
 {
-    use HasFactory, HasUlids;
+    use HasFactory, HasUlids, BelongsToOrganization;
 
     protected $fillable = [
+        'organization_id',
         'unit_id',
         'tenant_id',
         'title',

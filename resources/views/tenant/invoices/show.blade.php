@@ -2,9 +2,18 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold text-gray-900">Invoice Details</h2>
-            <a href="{{ route('tenant.invoices.index') }}" class="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">
-                Back to Invoices
-            </a>
+            <div class="flex items-center gap-x-3">
+                <a href="{{ route('tenant.invoices.download', $invoice) }}"
+                   class="inline-flex items-center gap-x-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">
+                    <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    Download PDF
+                </a>
+                <a href="{{ route('tenant.invoices.index') }}" class="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors">
+                    Back to Invoices
+                </a>
+            </div>
         </div>
     </x-slot>
 
@@ -19,6 +28,12 @@
 
         <div class="px-6 py-6">
             <dl class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+                @if($invoice->invoice_number)
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Invoice Number</dt>
+                    <dd class="mt-1 font-mono text-sm font-semibold text-gray-900">{{ $invoice->invoice_number }}</dd>
+                </div>
+                @endif
                 <div>
                     <dt class="text-sm font-medium text-gray-500">Description</dt>
                     <dd class="mt-1 text-sm font-semibold text-gray-900">{{ $invoice->description ?? 'Rent' }}</dd>
@@ -47,21 +62,102 @@
         </div>
     </div>
 
-    {{-- M-PESA Payment --}}
+    {{-- M-Pesa payment polling — shown after STK push is sent --}}
+    @if(session('pending_payment_id'))
+    <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 mb-8"
+         x-data="paymentPoller('{{ route('tenant.payments.status', session('pending_payment_id')) }}')"
+         x-init="start()">
+        <div class="border-b border-gray-100 bg-amber-50 px-6 py-4 flex items-center gap-3">
+            <svg x-show="status === 'pending'" class="h-5 w-5 text-amber-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <svg x-show="status === 'completed'" x-cloak class="h-5 w-5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <svg x-show="status === 'failed'" x-cloak class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <div>
+                <p class="text-sm font-semibold text-gray-900"
+                   x-text="status === 'pending' ? 'Waiting for M-Pesa confirmation...' : (status === 'completed' ? 'Payment confirmed!' : 'Payment failed or cancelled')"></p>
+                <p class="text-xs text-gray-500 mt-0.5"
+                   x-show="status === 'pending'">Check your phone and enter your M-Pesa PIN. This will update automatically.</p>
+                <p class="text-xs text-emerald-600 mt-0.5"
+                   x-show="status === 'completed' && receipt" x-cloak x-text="'Receipt: ' + receipt"></p>
+                <p class="text-xs text-red-500 mt-0.5"
+                   x-show="status === 'failed'" x-cloak>Please try again or contact support.</p>
+            </div>
+            <button x-show="status !== 'pending'" x-cloak @click="$el.closest('[x-data]').remove()"
+                class="ml-auto text-xs text-gray-400 hover:text-gray-600">Dismiss</button>
+        </div>
+    </div>
+    <script>
+    function paymentPoller(url) {
+        return {
+            status: 'pending',
+            receipt: null,
+            timer: null,
+            start() {
+                this.poll();
+            },
+            async poll() {
+                try {
+                    const res = await fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+                    const data = await res.json();
+                    this.status = data.status;
+                    this.receipt = data.receipt;
+                    if (data.status === 'pending') {
+                        this.timer = setTimeout(() => this.poll(), 4000);
+                    } else if (data.status === 'completed') {
+                        setTimeout(() => window.location.reload(), 2000);
+                    }
+                } catch (e) {
+                    this.timer = setTimeout(() => this.poll(), 5000);
+                }
+            }
+        }
+    }
+    </script>
+    @endif
+
+    {{-- Payment Options --}}
     @if($invoice->balance > 0)
-        <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 mb-8" x-data="{ showPayForm: false }">
+        @if(request('checkout') === 'cancelled')
+            <div class="mb-4 rounded-xl bg-amber-50 p-4 ring-1 ring-amber-200 text-sm text-amber-700">Checkout was cancelled. Your current balance is unchanged.</div>
+        @endif
+
+        <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-900/5 mb-8"
+             x-data="{ method: 'mpesa' }">
+            <div class="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
+                <h3 class="text-base font-semibold text-gray-900">Make a Payment</h3>
+            </div>
             <div class="px-6 py-6">
-                <button @click="showPayForm = !showPayForm" class="inline-flex items-center gap-x-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 transition-colors">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    Pay via M-PESA
-                </button>
-                <div x-show="showPayForm" x-cloak class="mt-6">
+                {{-- Method selector --}}
+                <div class="flex gap-3 mb-6">
+                    <button type="button" @click="method = 'mpesa'"
+                        :class="method === 'mpesa' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'"
+                        class="flex-1 rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all text-center">
+                        M-Pesa
+                    </button>
+                    @if(config('services.stripe.key'))
+                    <button type="button" @click="method = 'card'"
+                        :class="method === 'card' ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'"
+                        class="flex-1 rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all text-center">
+                        Card (Stripe)
+                    </button>
+                    @endif
+                </div>
+
+                {{-- M-Pesa form --}}
+                <div x-show="method === 'mpesa'">
                     <form action="{{ route('tenant.payments.initiate', $invoice) }}" method="POST" class="max-w-sm">
                         @csrf
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">M-PESA Phone Number</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">M-Pesa Phone Number</label>
                             <input type="text" name="phone" value="{{ auth()->user()->phone }}" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="0712345678" required>
                         </div>
+                        <input type="hidden" name="amount" value="{{ $invoice->balance }}">
                         <div class="mb-4 rounded-lg bg-gray-50 px-4 py-3">
                             <p class="text-sm text-gray-500">Amount: <span class="font-bold text-gray-900">KSh {{ number_format($invoice->balance, 2) }}</span></p>
                         </div>
@@ -71,6 +167,23 @@
                         </button>
                     </form>
                 </div>
+
+                {{-- Card (Stripe) form --}}
+                @if(config('services.stripe.key'))
+                <div x-show="method === 'card'" x-cloak>
+                    <div class="mb-4 rounded-lg bg-gray-50 px-4 py-3">
+                        <p class="text-sm text-gray-500">Amount: <span class="font-bold text-gray-900">KSh {{ number_format($invoice->balance, 2) }}</span></p>
+                        <p class="text-xs text-gray-400 mt-1">You will be redirected to Stripe to complete payment securely.</p>
+                    </div>
+                    <form action="{{ route('tenant.invoices.card.checkout', $invoice) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="inline-flex items-center gap-x-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                            Pay with Card
+                        </button>
+                    </form>
+                </div>
+                @endif
             </div>
         </div>
     @endif

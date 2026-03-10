@@ -16,20 +16,20 @@ class UnitController extends Controller
         }
     }
 
-    public function index(Request $request, Property $property)
+    public function index(Request $request, string $org, Property $property)
     {
         $this->authorizeLandlordProperty($request, $property);
         $units = $property->units()->with('activeLease.tenant.user')->paginate(15);
         return view('landlord.units.index', compact('property', 'units'));
     }
 
-    public function create(Request $request, Property $property)
+    public function create(Request $request, string $org, Property $property)
     {
         $this->authorizeLandlordProperty($request, $property);
         return view('landlord.units.create', compact('property'));
     }
 
-    public function store(Request $request, Property $property)
+    public function store(Request $request, string $org, Property $property)
     {
         $this->authorizeLandlordProperty($request, $property);
 
@@ -48,20 +48,20 @@ class UnitController extends Controller
         return redirect()->route('landlord.properties.show', $property)->with('success', 'Unit added.');
     }
 
-    public function show(Request $request, Property $property, Unit $unit)
+    public function show(Request $request, string $org, Property $property, Unit $unit)
     {
         $this->authorizeLandlordProperty($request, $property);
         $unit->load(['activeLease.tenant.user', 'maintenanceRequests']);
         return view('landlord.units.show', compact('property', 'unit'));
     }
 
-    public function edit(Request $request, Property $property, Unit $unit)
+    public function edit(Request $request, string $org, Property $property, Unit $unit)
     {
         $this->authorizeLandlordProperty($request, $property);
         return view('landlord.units.edit', compact('property', 'unit'));
     }
 
-    public function update(Request $request, Property $property, Unit $unit)
+    public function update(Request $request, string $org, Property $property, Unit $unit)
     {
         $this->authorizeLandlordProperty($request, $property);
 
@@ -78,7 +78,7 @@ class UnitController extends Controller
         return redirect()->route('landlord.properties.show', $property)->with('success', 'Unit updated.');
     }
 
-    public function destroy(Request $request, Property $property, Unit $unit)
+    public function destroy(Request $request, string $org, Property $property, Unit $unit)
     {
         $this->authorizeLandlordProperty($request, $property);
         $unit->delete();

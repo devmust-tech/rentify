@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\NotificationType;
 use App\Models\Invoice;
 use App\Services\NotificationService;
 use Illuminate\Console\Command;
@@ -22,8 +23,9 @@ class SendRentReminders extends Command
         foreach ($upcomingInvoices as $invoice) {
             $user = $invoice->lease->tenant->user ?? null;
             if ($user) {
-                $notificationService->sendInApp(
+                $notificationService->notify(
                     $user,
+                    NotificationType::PAYMENT_REMINDER,
                     'Rent Payment Reminder',
                     "Your rent of KSh " . number_format($invoice->amount, 2) . " is due on " . $invoice->due_date->format('d/m/Y') . "."
                 );

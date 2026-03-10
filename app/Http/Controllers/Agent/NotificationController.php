@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Landlord;
 use App\Models\Notification;
 use App\Models\Tenant;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
@@ -18,7 +19,7 @@ class NotificationController extends Controller
         return view('agent.notifications.index', compact('notifications'));
     }
 
-    public function show(Notification $notification)
+    public function show(string $org, Notification $notification)
     {
         $notification->markAsRead();
         return view('agent.notifications.show', compact('notification'));
@@ -46,5 +47,19 @@ class NotificationController extends Controller
         ]);
 
         return redirect()->route('agent.notifications.index')->with('success', 'Notification sent.');
+    }
+
+    public function poll(Request $request): JsonResponse
+    {
+        $notifications = $request->user()
+            ->notifications()
+            ->latest()
+            ->limit(20)
+            ->get();
+
+        return response()->json([
+            'unreadCount' => $request->user()->notifications()->unread()->count(),
+            'itemsHtml' => view('agent.notifications.partials.list', compact('notifications'))->render(),
+        ]);
     }
 }

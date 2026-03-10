@@ -54,16 +54,14 @@
                         @error('phone') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 
-                    {{-- Password --}}
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-                        <input type="password"
-                               name="password"
-                               id="password"
-                               class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm transition"
-                               required
-                               placeholder="Minimum 8 characters">
-                        @error('password') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
+                    {{-- Invitation Notice --}}
+                    <div class="rounded-lg bg-blue-50 p-3.5 ring-1 ring-blue-200">
+                        <div class="flex items-start gap-2.5">
+                            <svg class="h-5 w-5 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                            </svg>
+                            <p class="text-sm text-blue-700">An invitation email will be sent so the tenant can set their own password and activate their account.</p>
+                        </div>
                     </div>
 
                     {{-- Emergency Contact --}}

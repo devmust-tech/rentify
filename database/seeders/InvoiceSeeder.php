@@ -20,8 +20,6 @@ class InvoiceSeeder extends Seeder
                 'invoice_number' => 'INV-' . str_pad($invoiceNum++, 6, '0', STR_PAD_LEFT),
                 'amount' => $lease->rent_amount,
                 'due_date' => now()->day(5),
-                'period_start' => now()->startOfMonth(),
-                'period_end' => now()->endOfMonth(),
                 'status' => InvoiceStatus::PENDING,
             ]);
 
@@ -31,8 +29,6 @@ class InvoiceSeeder extends Seeder
                 'invoice_number' => 'INV-' . str_pad($invoiceNum++, 6, '0', STR_PAD_LEFT),
                 'amount' => $lease->rent_amount,
                 'due_date' => now()->subMonth()->day(5),
-                'period_start' => now()->subMonth()->startOfMonth(),
-                'period_end' => now()->subMonth()->endOfMonth(),
                 'status' => InvoiceStatus::PAID,
             ]);
 
@@ -43,8 +39,6 @@ class InvoiceSeeder extends Seeder
                     'invoice_number' => 'INV-' . str_pad($invoiceNum++, 6, '0', STR_PAD_LEFT),
                     'amount' => $lease->rent_amount,
                     'due_date' => now()->subMonths(2)->day(5),
-                    'period_start' => now()->subMonths(2)->startOfMonth(),
-                    'period_end' => now()->subMonths(2)->endOfMonth(),
                     'status' => InvoiceStatus::OVERDUE,
                 ]);
             }

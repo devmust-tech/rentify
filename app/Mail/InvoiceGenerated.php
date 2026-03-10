@@ -48,6 +48,7 @@ class InvoiceGenerated extends Mailable implements ShouldQueue
                 'unitName' => $this->invoice->lease->unit->unit_number,
                 'dueDate' => $this->invoice->due_date->format('d M Y'),
                 'month' => $this->invoice->due_date->format('F Y'),
+                'appUrl' => $this->invoice->organization?->subdomainUrl() ?? config('app.url'),
             ],
         );
     }

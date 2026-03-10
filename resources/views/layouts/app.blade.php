@@ -4,15 +4,18 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        @if(auth()->check() && auth()->user()->role !== \App\Enums\UserRole::ADMIN && !empty($currentOrganization?->slug))
+            <meta name="notifications-poll-url" content="{{ route(auth()->user()->role->value . '.notifications.poll', ['org' => $currentOrganization->slug]) }}">
+        @endif
 
-        <title>{{ config('app.name', 'Rentify') }}</title>
+        <title>{{ $currentOrganization->name ?? config('app.name', 'Rentify') }}</title>
 
         <!-- PWA -->
         <link rel="manifest" href="/manifest.json">
-        <meta name="theme-color" content="#4f46e5">
+        <meta name="theme-color" content="{{ $currentOrganization->primary_color ?? '#4f46e5' }}">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="apple-mobile-web-app-title" content="Rentify">
+        <meta name="apple-mobile-web-app-title" content="{{ $currentOrganization->name ?? config('app.name', 'Rentify') }}">
         <link rel="apple-touch-icon" href="/icons/icon-192x192.svg">
 
         <!-- Fonts -->
@@ -22,10 +25,19 @@
         <!-- Chart.js -->
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 
+        @stack('head-scripts')
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         <style>
+            :root {
+                --brand:        {{ $currentOrganization->primary_color ?? '#4f46e5' }};
+                --brand-accent: {{ $currentOrganization->accent_color  ?? '#6366f1' }};
+            }
+            .brand-bg         { background-color: var(--brand) !important; }
+            .brand-text        { color: var(--brand) !important; }
+            .sidebar-active    { background-color: var(--brand) !important; color: white !important; }
             [x-cloak] { display: none !important; }
             body { font-family: 'Inter', sans-serif; }
             .sidebar-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -35,6 +47,7 @@
             @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
             .fade-in-up { animation: fadeInUp 0.4s ease both; }
         </style>
+        @stack('styles')
     </head>
     <body class="font-sans antialiased bg-gray-50/80">
         <div class="min-h-screen" x-data="{ sidebarOpen: false }">
@@ -45,10 +58,14 @@
                     <div class="flex grow flex-col overflow-y-auto bg-gray-950 sidebar-scrollbar">
                         <div class="flex h-16 shrink-0 items-center justify-between px-5 border-b border-white/[0.06]">
                             <div class="flex items-center gap-x-2.5">
-                                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 shadow-lg shadow-indigo-600/30">
-                                    <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+                                <div class="flex h-8 w-8 items-center justify-center rounded-lg brand-bg shadow-lg">
+                                    @if(!empty($currentOrganization->logo))
+                                        <img src="{{ Storage::url($currentOrganization->logo) }}" alt="Logo" class="h-8 w-8 rounded-lg object-cover">
+                                    @else
+                                        <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+                                    @endif
                                 </div>
-                                <span class="text-lg font-bold text-white tracking-tight">Rentify</span>
+                                <span class="text-lg font-bold text-white tracking-tight">{{ $currentOrganization->name ?? config('app.name', 'Rentify') }}</span>
                             </div>
                             <button @click="sidebarOpen = false" class="rounded-md p-1.5 text-gray-500 hover:text-white hover:bg-white/10 transition">
                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -66,12 +83,16 @@
                 <div class="flex grow flex-col overflow-y-auto bg-gray-950 sidebar-scrollbar border-r border-white/[0.04]">
                     <div class="flex h-16 shrink-0 items-center px-5 border-b border-white/[0.06]">
                         <div class="flex items-center gap-x-2.5">
-                            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 shadow-lg shadow-indigo-600/30">
-                                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+                            <div class="flex h-8 w-8 items-center justify-center rounded-lg brand-bg shadow-lg">
+                                @if(!empty($currentOrganization->logo))
+                                    <img src="{{ Storage::url($currentOrganization->logo) }}" alt="Logo" class="h-8 w-8 rounded-lg object-cover">
+                                @else
+                                    <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+                                @endif
                             </div>
                             <div>
-                                <span class="text-base font-bold text-white tracking-tight">Rentify</span>
-                                <span class="ml-1.5 rounded-full bg-indigo-600/20 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-400 ring-1 ring-indigo-500/30">Pro</span>
+                                <span class="text-base font-bold text-white tracking-tight">{{ $currentOrganization->name ?? config('app.name', 'Rentify') }}</span>
+                                <span class="ml-1.5 rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold text-white/70 ring-1 ring-white/20">Pro</span>
                             </div>
                         </div>
                     </div>
@@ -93,7 +114,7 @@
 
                     <div class="flex flex-1 items-center justify-between gap-x-4">
                         @isset($header)
-                            <div id="turbo-header" class="flex-1">{{ $header }}</div>
+                            <div id="turbo-header" class="flex-1">{!! $header !!}</div>
                         @endisset
 
                         <div class="flex items-center gap-x-2 shrink-0">
@@ -111,14 +132,17 @@
 
                             <div class="h-5 w-px bg-gray-200 hidden lg:block"></div>
 
-                            <!-- Notifications bell -->
-                            @php $unreadCount = auth()->user()->notifications()->unread()->count(); @endphp
-                            <a href="{{ route(auth()->user()->role->value . '.notifications.index') }}" class="relative rounded-lg p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition group">
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                                @if($unreadCount > 0)
-                                    <span class="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full ring-2 ring-white animate-pulse">{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
-                                @endif
-                            </a>
+                            <!-- Notifications bell (not for admin) -->
+                            @if(auth()->user()->role !== \App\Enums\UserRole::ADMIN)
+                                @php $unreadCount = auth()->user()->notifications()->unread()->count(); @endphp
+                                <a href="{{ route(auth()->user()->role->value . '.notifications.index', ['org' => $currentOrganization->slug]) }}" class="relative rounded-lg p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition group">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                    <span
+                                        data-notification-count
+                                        class="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full ring-2 ring-white animate-pulse {{ $unreadCount > 0 ? '' : 'hidden' }}"
+                                    >{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
+                                </a>
+                            @endif
 
                             <!-- Divider -->
                             <div class="h-5 w-px bg-gray-200"></div>
@@ -126,7 +150,7 @@
                             <!-- User dropdown -->
                             <div x-data="{ open: false }" class="relative">
                                 <button @click="open = !open" class="flex items-center gap-x-2 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition group">
-                                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 font-bold text-sm text-white shadow-md">
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-full font-bold text-sm text-white shadow-md" style="background: linear-gradient(135deg, var(--brand), var(--brand-accent))">
                                         {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                                     </div>
                                     <span class="hidden sm:block max-w-[120px] truncate">{{ Auth::user()->name }}</span>
@@ -142,7 +166,7 @@
                                     class="absolute right-0 mt-2 w-60 origin-top-right rounded-xl bg-white py-1.5 shadow-xl ring-1 ring-black/5 focus:outline-none">
                                     <div class="px-4 py-3 border-b border-gray-100">
                                         <div class="flex items-center gap-3">
-                                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 font-bold text-white shadow">
+                                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold text-white shadow" style="background: linear-gradient(135deg, var(--brand), var(--brand-accent))">
                                                 {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                                             </div>
                                             <div class="min-w-0">
@@ -152,13 +176,13 @@
                                         </div>
                                     </div>
                                     <div class="py-1">
-                                        <a href="{{ route('profile.edit') }}" class="flex items-center gap-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition group">
+                                        <a href="{{ route('profile.edit', ['org' => $currentOrganization->slug]) }}" class="flex items-center gap-x-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition group">
                                             <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-gray-500 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition">
                                                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                             </div>
                                             Profile Settings
                                         </a>
-                                        <form method="POST" action="{{ route('logout') }}" data-turbo="false">
+                                        <form method="POST" action="{{ route('logout', ['org' => $currentOrganization->slug]) }}" data-turbo="false">
                                             @csrf
                                             <button type="submit" class="flex w-full items-center gap-x-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition group">
                                                 <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-500 group-hover:bg-red-100 transition">
@@ -173,6 +197,25 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Impersonation banner -->
+                @if(session('impersonating_original_admin_id'))
+                <div class="sticky top-16 z-20 bg-amber-400 px-4 py-2 flex items-center justify-between gap-4 shadow-sm">
+                    <div class="flex items-center gap-2 text-sm font-medium text-amber-900">
+                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        You are impersonating <strong>{{ Auth::user()->name }}</strong> ({{ Auth::user()->email }})
+                    </div>
+                    <form method="POST" action="{{ route('impersonation.leave', ['org' => $currentOrganization->slug]) }}">
+                        @csrf
+                        <button type="submit" class="rounded-lg bg-amber-900 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-800 transition">
+                            Leave Impersonation
+                        </button>
+                    </form>
+                </div>
+                @endif
 
                 <!-- Flash messages -->
                 <div id="turbo-flash">

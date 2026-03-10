@@ -3,16 +3,20 @@
 namespace App\Models;
 
 use App\Enums\InvoiceStatus;
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
 {
-    use HasFactory, HasUlids;
+    use HasFactory, HasUlids, BelongsToOrganization, SoftDeletes;
 
     protected $fillable = [
+        'organization_id',
         'lease_id',
+        'invoice_number',
         'amount',
         'due_date',
         'status',
@@ -50,16 +54,19 @@ class Invoice extends Model
 
     /**
      * Recalculate and update invoice status based on payments received.
+     * Always refreshes from DB first to avoid stale cached data.
      */
     public function updateStatus(): void
     {
-        $totalPaid = $this->total_paid;
-        $amount = (float) $this->amount;
+        // Fresh query to avoid cached relationship data
+        $totalPaid = (float) $this->payments()->where('status', 'completed')->sum('amount');
+        $amount    = (float) $this->amount;
 
-        if ($totalPaid >= $amount) {
+        if ($totalPaid >= $amount && $amount > 0) {
             $this->update(['status' => InvoiceStatus::PAID]);
         } elseif ($totalPaid > 0) {
             $this->update(['status' => InvoiceStatus::PARTIALLY_PAID]);
         }
+        // If totalPaid == 0 we leave the status as-is (pending or overdue)
     }
 }

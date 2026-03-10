@@ -41,21 +41,21 @@ class MaintenanceController extends Controller
         return view('landlord.maintenance.index', compact('maintenanceRequests'));
     }
 
-    public function show(Request $request, MaintenanceRequest $maintenance)
+    public function show(Request $request, string $org, MaintenanceRequest $maintenance)
     {
         $this->authorizeLandlordMaintenance($request, $maintenance);
         $maintenance->load(['unit.property', 'tenant.user', 'notes.user']);
         return view('landlord.maintenance.show', compact('maintenance'));
     }
 
-    public function edit(Request $request, MaintenanceRequest $maintenance)
+    public function edit(Request $request, string $org, MaintenanceRequest $maintenance)
     {
         $this->authorizeLandlordMaintenance($request, $maintenance);
         $maintenance->load(['unit.property', 'tenant.user']);
         return view('landlord.maintenance.edit', compact('maintenance'));
     }
 
-    public function update(Request $request, MaintenanceRequest $maintenance)
+    public function update(Request $request, string $org, MaintenanceRequest $maintenance)
     {
         $this->authorizeLandlordMaintenance($request, $maintenance);
 
@@ -96,7 +96,7 @@ class MaintenanceController extends Controller
         return redirect()->route('landlord.maintenance.show', $maintenance)->with('success', 'Request updated.');
     }
 
-    public function addNote(Request $request, MaintenanceRequest $maintenance)
+    public function addNote(Request $request, string $org, MaintenanceRequest $maintenance)
     {
         $this->authorizeLandlordMaintenance($request, $maintenance);
 
